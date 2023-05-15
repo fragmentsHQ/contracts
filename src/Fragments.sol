@@ -6,6 +6,9 @@ import "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import "openzeppelin-contracts/token/ERC20/ERC20.sol";
+
 import "./interfaces/OpsTaskCreator.sol";
 
 contract Fragments is
@@ -15,8 +18,8 @@ contract Fragments is
     UUPSUpgradeable,
     OpsTaskCreator
 {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor() OpsTaskCreator(_ops, msg.sender) {
+        /// @custom:oz-upgrades-unsafe-allow constructor
         _disableInitializers();
     }
 
@@ -26,29 +29,20 @@ contract Fragments is
         __UUPSUpgradeable_init();
     }
 
-    function pause() public onlyOwner {
+    function pause() public {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function unpause() public {
         _unpause();
     }
 
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override {}
 
-    address public merchantAddress;
-    string public name;
-    string public logoURI;
-    uint256 public totalRevenue;
-    bool internal isTransferring = false;
-    address internal owner;
-    uint256 public FEES = 0.01 ether;
-    uint256 public FEES_PAID = 0;
     address public UniswapV3 = 0x3DC9462BFafD9Bea7442f538725257E7B92770E3;
     // address payable _ops = payable(0xc1C6805B857Bef1f412519C4A842522431aFed39);
     address payable _ops = payable(0xB3f5503f93d5Ef84b06993a1975B9D21B962892F);
+    bool public isTransferring = false;
 
     mapping(uint256 => subscriptionInfo) public subscriptions;
     uint256[] internal subscriptionId;
@@ -57,46 +51,10 @@ contract Fragments is
 
     receive() external payable {}
 
-    constructor(
-        address _owner,
-        address _merchantAddress,
-        string memory _name,
-        string memory _logoURI
-    ) OpsTaskCreator(_ops, _owner) {
-        merchantAddress = _merchantAddress;
-        name = _name;
-        logoURI = _logoURI;
-        owner = _owner;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only Owner Function");
-        _;
-    }
-
-    modifier onlyMerchant() {
-        require(
-            merchantAddress == msg.sender,
-            "Only Merchant Allowed Function"
-        );
-        _;
-    }
-
     modifier isTransfer() {
         require(isTransferring == false, "already transferring!");
         _;
     }
-
-    event subscriptionCreated(
-        address indexed user,
-        address indexed merchantAddress,
-        uint256 indexed subscriptionId,
-        string heading,
-        string description,
-        uint256 pricePerCycle,
-        uint256 interval,
-        uint256 timestamp
-    );
 
     event subscribed(
         uint256 indexed subscriptionId,
@@ -128,40 +86,12 @@ contract Fragments is
         uint256 interval;
     }
 
-    function changeSwapContract(address _contract) external onlyOwner {
+    function changeSwapContract(address _contract) external {
         UniswapV3 = _contract;
     }
 
     function checkBalance() public view returns (uint256) {
         return address(this).balance;
-    }
-
-    function createSubscription(
-        string memory _heading,
-        string memory _description,
-        uint256 _pricePerCycle,
-        uint256 _interval,
-        uint256 _id
-    ) public onlyMerchant {
-        subscriptionInfo storage newSubscription = subscriptions[_id];
-        newSubscription.merchant = msg.sender;
-        newSubscription.heading = _heading;
-        newSubscription.description = _description;
-        newSubscription.pricePerCycle = _pricePerCycle;
-        newSubscription.interval = _interval;
-        newSubscription.timestamp = block.timestamp;
-        subscriptionId.push(_id);
-
-        emit subscriptionCreated(
-            msg.sender,
-            address(this),
-            _id,
-            _heading,
-            _description,
-            _pricePerCycle,
-            _interval,
-            block.timestamp
-        );
     }
 
     function checkSubscribe() public view returns (bool) {
@@ -205,7 +135,7 @@ contract Fragments is
         string memory _chainId,
         address _user
     ) public {
-        // ERC20(_token).permit(_user, address(this), _amount, deadline, v, r, s);
+        // SafeERC20(_token).permit(_user, address(this), _amount, deadline, v, r, s);
 
         subscriptionInfo storage sub = subscriptions[_subscriptionId];
         require(sub.pricePerCycle != 0, "No Subscription found to subscribe !");
@@ -249,19 +179,19 @@ contract Fragments is
         delete subsribes[_user];
     }
 
-    function withDraw(address _token) external onlyMerchant isTransfer {
-        uint256 balance = getBalanceOfToken(_token);
-        isTransferring = true;
-        UNI(UniswapV3).swapExactInputSingle(
-            _token,
-            (balance * 25) / 1000,
-            payable(owner)
-        );
-        // ERC20(_token).transfer(owner, (balance*25)/1000);
+    // function withDraw(address _token) external isTransfer {
+    //     uint256 balance = getBalanceOfToken(_token);
+    //     isTransferring = true;
+    //     // UNI(UniswapV3).swapExactInputSingle(
+    //     //     _token,
+    //     //     (balance * 25) / 1000,
+    //     //     payable(owner)
+    //     // );
+    //     SafeERC20(_token).transfer(owner, (balance * 25) / 1000);
 
-        ERC20(_token).transfer(merchantAddress, (balance * 975) / 1000);
-        isTransferring = false;
-    }
+    //     SafeERC20(_token).transfer(merchantAddress, (balance * 975) / 1000);
+    //     isTransferring = false;
+    // }
 
     function transferToMe(
         address _owner,
