@@ -9,11 +9,10 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/token/ERC20/ERC20.sol";
 
-import {IConnext} from "@connext/nxtp-contracts/contracts/core/connext/interfaces/IConnext.sol";
-
-import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "v3-periphery/libraries/TransferHelper.sol";
+import "v3-periphery/interfaces/ISwapRouter.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {IConnext} from "@connext/nxtp-contracts/contracts/core/connext/interfaces/IConnext.sol";
 
 import "./interfaces/OpsTaskCreator.sol";
 
