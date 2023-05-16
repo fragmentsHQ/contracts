@@ -29,14 +29,14 @@ module.exports = {
       accounts: [process.env.PRIVATE_KEY],
       gasPrice: 1000000000000
     },
-    gnosis: {
-      url: process.env.ALCHEMY_GNOSIS_API_URL,
-      accounts: [process.env.PRIVATE_KEY2]
-    },
-    polygon: {
-      url: process.env.ALCHEMY_POLYGON_API_URL,
-      accounts: [process.env.PRIVATE_KEY]
-    },
+    // gnosis: {
+    //   url: process.env.ALCHEMY_GNOSIS_API_URL,
+    //   accounts: [process.env.PRIVATE_KEY2]
+    // },
+    // polygon: {
+    //   url: process.env.ALCHEMY_POLYGON_API_URL,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // },
   },
   etherscan: {
     // apiKey: process.env.ETHERSCAN_API_KEY

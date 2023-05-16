@@ -10,15 +10,17 @@ import "./OpsReady.sol";
 abstract contract OpsTaskCreator is OpsReady {
     using SafeERC20 for IERC20;
 
-    address public immutable fundsOwner;
-    ITaskTreasuryUpgradable public immutable taskTreasury;
+    address public fundsOwner;
+    ITaskTreasuryUpgradable public taskTreasury;
 
-    constructor(
+    function initialize(
         address _ops,
         address _fundsOwner
-    ) OpsReady(_ops, address(this)) {
+    ) public onlyInitializing {
         fundsOwner = _fundsOwner;
         taskTreasury = ops.taskTreasury();
+
+        OpsReady.__initialize(_ops, address(this));
     }
 
     /**
