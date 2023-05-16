@@ -9,109 +9,128 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/token/ERC20/ERC20.sol";
 
+import {IConnext} from "@connext/nxtp-contracts/contracts/core/connext/interfaces/IConnext.sol";
+
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
 import "./interfaces/OpsTaskCreator.sol";
 
-contract Fragments is
-    Initializable,
-    PausableUpgradeable,
-    OwnableUpgradeable,
-    UUPSUpgradeable,
-    OpsTaskCreator
-{
-    constructor() OpsTaskCreator(_ops, msg.sender) {
-        /// @custom:oz-upgrades-unsafe-allow constructor
-        _disableInitializers();
-    }
-
-    function initialize() public initializer {
-        __Pausable_init();
-        __Ownable_init();
-        __UUPSUpgradeable_init();
-    }
-
-    function pause() public {
-        _pause();
-    }
-
-    function unpause() public {
-        _unpause();
-    }
-
-    function _authorizeUpgrade(address newImplementation) internal override {}
-
-    address public UniswapV3 = 0x3DC9462BFafD9Bea7442f538725257E7B92770E3;
-    // address payable _ops = payable(0xc1C6805B857Bef1f412519C4A842522431aFed39);
-    address payable _ops = payable(0xB3f5503f93d5Ef84b06993a1975B9D21B962892F);
-    bool public isTransferring = false;
-
-    mapping(uint256 => subscriptionInfo) public subscriptions;
-    uint256[] internal subscriptionId;
-
-    mapping(address => subscribeInfo) public subsribes;
-
+contract Fragments is OpsTaskCreator {
     receive() external payable {}
+
+    fallback() external payable {}
+
+    uint256 public FEES = 10000;
+
+    enum Option {
+        TIME,
+        PRICE_FEED,
+        CONTRACT_VARIBLES
+    }
+
+    IConnext public immutable connext;
+    ISwapRouter public immutable swapRouter;
+
+    uint24 public constant poolFee = 500;
+    uint256 public out;
+    address public constant WETH = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
+
+    mapping(bytes32 => address) internal _createdJobs;
+
+    constructor(
+        IConnext _connext,
+        ISwapRouter _swapRouter,
+        address payable _ops
+    )
+        // address chainLink
+        OpsTaskCreator(_ops, msg.sender)
+    {
+        connext = _connext;
+        swapRouter = _swapRouter;
+        owner = msg.sender;
+        // priceFeed = AggregatorV3Interface(chainLink);
+    }
+
+    function getLatestPrice() public view returns (int) {
+        (
+            uint80 roundID,
+            int price,
+            uint startedAt,
+            uint timeStamp,
+            uint80 answeredInRound
+        ) = priceFeed.latestRoundData();
+        return price;
+    }
+
+    bool public isTransferring = false;
 
     modifier isTransfer() {
         require(isTransferring == false, "already transferring!");
         _;
     }
 
-    event subscribed(
-        uint256 indexed subscriptionId,
-        address indexed user,
-        bytes32 indexed gelatoTxId,
+    event JobCreated(
+        address indexed taskCreator,
+        address indexed execAddress,
+        bytes32 indexed taskId,
         address token,
-        string email,
-        string chainId,
-        uint256 timestamp,
-        uint256 interval
+        uint256 amount,
+        address receiver,
+        uint256 inteval,
+        Option option
     );
 
-    struct subscriptionInfo {
-        address merchant;
-        string heading;
-        string description;
-        uint256 pricePerCycle;
-        uint256 interval;
-        uint256 timestamp;
-    }
+    event JobSuccess(
+        uint256 indexed txFee,
+        address indexed feeToken,
+        address indexed execAddress,
+        bytes execData,
+        bytes32 taskId,
+        bool callSuccess
+    );
 
-    struct subscribeInfo {
-        uint256 subscriptionId;
-        address token;
-        string email;
-        string chainId;
-        uint256 timestamp;
-        bytes32 gelatoTxId;
-        uint256 interval;
-    }
+    function xTransfer(
+        address recipient,
+        uint32 destinationDomain,
+        address tokenAddress,
+        uint256 amount,
+        uint256 slippage,
+        uint256 relayerFee
+    ) public payable {
+        IERC20 token = IERC20(tokenAddress);
+        // This contract approves transfer to Connext
+        token.approve(address(connext), amount);
 
-    function changeSwapContract(address _contract) external {
-        UniswapV3 = _contract;
+        connext.xcall{value: relayerFee}(
+            destinationDomain, // _destination: Domain ID of the destination chain
+            recipient, // _to: address receiving the funds on the destination
+            tokenAddress, // _asset: address of the token contract
+            msg.sender, // _delegate: address that can revert or forceLocal on destination
+            amount, // _amount: amount of tokens to transfer
+            slippage, // _slippage: the maximum amount of slippage the user will accept in BPS
+            "" // _callData: empty because we're only sending funds
+        );
     }
 
     function checkBalance() public view returns (uint256) {
         return address(this).balance;
     }
 
-    function checkSubscribe() public view returns (bool) {
-        subscribeInfo memory res = subsribes[msg.sender];
-        return res.subscriptionId != 0;
-    }
-
-    // uint256 public constant INTERVAL = 30 days;
-
-    function createTask(
+    function _gelatoTaskCreator(
         address _user,
         address _token,
         uint256 _amount,
-        uint256 _interval
+        uint256 _interval,
+        address _receiver
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
-            this.transferToMe.selector,
+            this._timeAutomateCron.selector,
             _user,
             _token,
-            _amount
+            _amount,
+            _receiver
         );
 
         ModuleData memory moduleData = ModuleData({
@@ -121,87 +140,183 @@ contract Fragments is
         moduleData.modules[0] = Module.TIME;
         moduleData.modules[1] = Module.PROXY;
 
-        moduleData.args[0] = _timeModuleArg(block.timestamp, _interval);
+        moduleData.args[0] = _timeModuleArg(
+            block.timestamp + _interval,
+            _interval
+        );
         moduleData.args[1] = _proxyModuleArg();
 
         bytes32 id = _createTask(address(this), execData, moduleData, ETH);
         return id;
     }
 
-    function subscribe(
-        uint256 _subscriptionId,
-        address _token,
-        string memory _email,
-        string memory _chainId,
-        address _user
-    ) public {
-        // SafeERC20(_token).permit(_user, address(this), _amount, deadline, v, r, s);
-
-        subscriptionInfo storage sub = subscriptions[_subscriptionId];
-        require(sub.pricePerCycle != 0, "No Subscription found to subscribe !");
-
-        uint256 dec = ERC20(_token).decimals();
-
-        bytes32 id = createTask(
-            _user,
-            _token,
-            (sub.pricePerCycle * (10 ** dec)),
-            sub.interval
+    function createTask(
+        address _from,
+        address _to,
+        uint256 _amount,
+        int256 _price,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 destinationDomain,
+        uint256 relayerFee
+    ) internal returns (bytes32) {
+        bytes memory execData = abi.encodeWithSelector(
+            this.executeLimitOrder.selector,
+            _from,
+            _to,
+            _amount,
+            _price,
+            _fromToken,
+            _toToken,
+            _toChain,
+            destinationDomain,
+            relayerFee
         );
 
-        subscribeInfo storage newSubsribe = subsribes[_user];
-        newSubsribe.subscriptionId = _subscriptionId;
-        newSubsribe.token = _token;
-        newSubsribe.email = _email;
-        newSubsribe.chainId = _chainId;
-        newSubsribe.gelatoTxId = id;
-        newSubsribe.interval = sub.interval;
-        newSubsribe.timestamp = block.timestamp;
+        ModuleData memory moduleData = ModuleData({
+            modules: new Module[](3),
+            args: new bytes[](3)
+        });
 
-        emit subscribed(
-            _subscriptionId,
-            _user,
-            id,
-            _token,
-            _email,
-            _chainId,
-            newSubsribe.timestamp,
-            sub.interval
-        );
+        moduleData.modules[0] = Module.TIME;
+        moduleData.modules[1] = Module.PROXY;
+        moduleData.modules[2] = Module.SINGLE_EXEC;
+
+        moduleData.args[0] = _timeModuleArg(block.timestamp, 5);
+        moduleData.args[1] = _proxyModuleArg();
+        moduleData.args[2] = _singleExecModuleArg();
+
+        bytes32 id = _createTask(address(this), execData, moduleData, ETH);
+        return id;
     }
 
-    function cancelSubscribe(address _user) external {
-        subscribeInfo memory res = subsribes[_user];
-        require(res.subscriptionId != 0, "No subscribe found");
-
-        _cancelTask(res.gelatoTxId);
-
-        delete subsribes[_user];
-    }
-
-    // function withDraw(address _token) external isTransfer {
-    //     uint256 balance = getBalanceOfToken(_token);
-    //     isTransferring = true;
-    //     // UNI(UniswapV3).swapExactInputSingle(
-    //     //     _token,
-    //     //     (balance * 25) / 1000,
-    //     //     payable(owner)
-    //     // );
-    //     SafeERC20(_token).transfer(owner, (balance * 25) / 1000);
-
-    //     SafeERC20(_token).transfer(merchantAddress, (balance * 975) / 1000);
-    //     isTransferring = false;
-    // }
-
-    function transferToMe(
-        address _owner,
+    function swapExactInputSingle(
         address _token,
-        uint256 _amount
+        uint256 amountIn
+    )
+        public
+        returns (
+            // address payable _recipient
+            uint256 amountOut
+        )
+    {
+        TransferHelper.safeApprove(_token, address(swapRouter), amountIn);
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: _token,
+                tokenOut: WETH,
+                fee: poolFee,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
+
+        amountOut = swapRouter.exactInputSingle(params);
+        return amountOut;
+
+        // address payable recipient  = payable(0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7);
+        // WETH9_(WETH).withdraw(amountOut);
+        // _recipient.transfer(amountOut);
+    }
+
+    function _createTimeAutomate(
+        address _exec,
+        uint256 _interval,
+        address _token,
+        uint256 _amount,
+        address _receiver
     ) external {
-        ERC20(_token).transferFrom(_owner, address(this), _amount);
+        require(
+            ERC20(_token).allowance(_exec, address(this)) >= _amount,
+            "User must approve amount"
+        );
+
+        ERC20(_token).transfer(_exec, _amount);
+
+        bytes32 _id = _gelatoTaskCreator(
+            _exec,
+            _token,
+            _amount,
+            _interval,
+            _receiver
+        );
+
+        emit JobCreated(
+            address(this),
+            _exec,
+            _id,
+            _token,
+            _amount,
+            _receiver,
+            _interval,
+            Option.TIME
+        );
+    }
+
+    function _createPriceFeedAutomate(
+        address _exec,
+        uint256 _interval,
+        address _token,
+        uint256 _amount,
+        address _receiver
+    ) external {
+        require(
+            ERC20(_token).allowance(_exec, address(this)) >= _amount,
+            "User must approve amount"
+        );
+
+        ERC20(_token).transfer(_exec, _amount);
+
+        bytes32 _id = _gelatoTaskCreator(
+            _exec,
+            _token,
+            _amount,
+            _interval,
+            _receiver
+        );
+
+        emit JobCreated(
+            address(this),
+            _exec,
+            _id,
+            _token,
+            _amount,
+            _receiver,
+            _interval,
+            Option.TIME
+        );
+    }
+
+    function _createContractAutomate(
+        address exec,
+        bytes calldata execData
+    ) external {}
+
+    function _timeAutomateCron(
+        address _exec,
+        address _token,
+        uint256 _amount,
+        address _receiver
+    ) external {
+        require(
+            ERC20(_token).allowance(_exec, address(this)) >= _amount,
+            "User must approve amount"
+        );
+
+        ERC20(_token).transferFrom(_exec, _receiver, _amount);
 
         (uint256 fee, address feeToken) = _getFeeDetails();
         _transfer(fee, feeToken);
+    }
+
+    function _transferGas() external {
+        (uint256 fee, address feeToken) = _getFeeDetails();
+
+        payable(address(this)).transfer(fee);
     }
 
     function getBalanceOfToken(address _address) public view returns (uint256) {
