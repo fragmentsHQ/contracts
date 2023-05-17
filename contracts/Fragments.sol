@@ -20,7 +20,7 @@ import "./interfaces/WETH9_.sol";
 
 contract Fragments is OpsTaskCreator {
     using SafeERC20 for IERC20;
-    
+
     receive() external payable {}
 
     fallback() external payable {}
@@ -55,17 +55,8 @@ contract Fragments is OpsTaskCreator {
         uint256 relayerFee;
     }
 
-     event FundsDeposited(
-        address indexed sender,
-        address indexed token,
-        uint256 indexed amount
-    );
-    event FundsWithdrawn(
-        address indexed receiver,
-        address indexed initiator,
-        address indexed token,
-        uint256 amount
-    );
+    event FundsDeposited(address indexed sender, address indexed token, uint256 indexed amount);
+    event FundsWithdrawn(address indexed receiver, address indexed initiator, address indexed token, uint256 amount);
 
     IConnext public immutable connext;
     ISwapRouter public immutable swapRouter;
@@ -95,14 +86,7 @@ contract Fragments is OpsTaskCreator {
         _;
     }
 
-    /**
-     * @notice A modifier for authenticated calls.
-     * This is an important security consideration. If the target contract
-     * function should be authenticated, it must check three things:
-     *    1) The originating call comes from the expected origin domain.
-     *    2) The originating call comes from the expected source contract.
-     *    3) The call to this contract comes from Connext.
-     */
+
     modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source) {
         require(
             _origin == _originDomain && _originSender == _source && msg.sender == address(connext),
@@ -147,6 +131,8 @@ contract Fragments is OpsTaskCreator {
         // This contract approves transfer to Connext
         token.approve(address(connext), amount);
 
+        bytes memory _callData = abi.encode(msg.sender, recipient, amount, tokenAddress);
+
         connext.xcall{value: relayerFee}(
             destinationDomain, // _destination: Domain ID of the destination chain
             recipient, // _to: address receiving the funds on the destination
@@ -154,7 +140,7 @@ contract Fragments is OpsTaskCreator {
             msg.sender, // _delegate: address that can revert or forceLocal on destination
             amount, // _amount: amount of tokens to transfer
             slippage, // _slippage: the maximum amount of slippage the user will accept in BPS
-            "" // _callData: empty because we're only sending funds
+            _callData // _callData: empty because we're only sending funds
         );
     }
 
@@ -170,14 +156,17 @@ contract Fragments is OpsTaskCreator {
         uint32 _origin,
         bytes memory _callData
     ) external onlySource(_originSender, _origin, _origin, _originSender) returns (bytes memory) {
-        // Unpack the _callData
+        address  sender;
+        address  recipient;
+        uint256 amount;
+        address  tokenAddress;
+
+        (sender, recipient, amount, tokenAddress) = abi.decode(_callData, (address, address, uint256, address));
     }
 
     function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
         public
-        returns (
-            uint256 amountOut
-        )
+        returns (uint256 amountOut)
     {
         uint24 poolFee = 500;
         TransferHelper.safeApprove(_fromToken, address(swapRouter), amountIn);
@@ -249,9 +238,8 @@ contract Fragments is OpsTaskCreator {
     ) external {
         require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
 
-
         bytes32 _id = _gelatoTimeJobCreator(
-            msg.sender,_to, _amount, _interval, _fromToken, _toToken, _toChain, destinationDomain, relayerFee
+            msg.sender, _to, _amount, _interval, _fromToken, _toToken, _toChain, destinationDomain, relayerFee
         );
 
         emit JobCreated(address(this), msg.sender, _id, _fromToken, _amount, _to, _interval, Option.TIME);
@@ -276,7 +264,7 @@ contract Fragments is OpsTaskCreator {
         uint256 amountOut = _amount;
 
         if (_fromToken != _toToken) {
-            amountOut = swapExactInputSingle(_fromToken,_toToken, _amount);
+            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
         }
         if (block.chainid != _toChain) {
             xTransfer(_to, destinationDomain, WETH, amountOut, slippage, relayerFee);
@@ -397,39 +385,28 @@ contract Fragments is OpsTaskCreator {
 
     function _createContractAutomate(address exec, bytes calldata execData) external {}
 
-    function _transferGas  (   
-        address payable _to,
-        address _paymentToken,
-        uint256 _amount
-    ) external { 
-            (uint256 fee, address feeToken) = _getFeeDetails();
+    function _transferGas(address payable _to, address _paymentToken, uint256 _amount) external {
+        (uint256 fee, address feeToken) = _getFeeDetails();
 
-            payable(address(this)).transfer(fee);
-
+        payable(address(this)).transfer(fee);
 
         if (_paymentToken == ETH) {
-            (bool success, ) = _to.call{value: _amount}("");
+            (bool success,) = _to.call{value: _amount}("");
             require(success, "_transfer: ETH transfer failed");
         } else {
             SafeERC20.safeTransfer(IERC20(_paymentToken), _to, _amount);
         }
     }
 
-    function depositGas(
-        address payable _to,
-        address _paymentToken,
-        uint256 _amount
-    ) external payable {
-        
+    function depositGas(address payable _to, address _paymentToken, uint256 _amount) external payable {
         if (_paymentToken == ETH) {
-        (bool success, ) = _to.call{value: _amount}("");
-        require(success, "_transfer: ETH transfer failed");
+            (bool success,) = _to.call{value: _amount}("");
+            require(success, "_transfer: ETH transfer failed");
         } else {
             SafeERC20.safeTransfer(IERC20(_paymentToken), _to, _amount);
         }
 
         userBalance[_to][_paymentToken] = userBalance[_to][_paymentToken] + _amount;
-
 
         emit FundsDeposited(_to, _paymentToken, _amount);
     }
@@ -437,7 +414,6 @@ contract Fragments is OpsTaskCreator {
     function getBalanceOfToken(address _address) public view returns (uint256) {
         return IERC20(_address).balanceOf(address(this));
     }
-
 
     function getJobId(
         address taskCreator,
@@ -448,15 +424,6 @@ contract Fragments is OpsTaskCreator {
         bytes32 resolverHash
     ) internal pure returns (bytes32) {
         return
-            keccak256(
-                abi.encode(
-                    taskCreator,
-                    execAddress,
-                    execSelector,
-                    useTaskTreasuryFunds,
-                    feeToken,
-                    resolverHash
-                )
-            );
+            keccak256(abi.encode(taskCreator, execAddress, execSelector, useTaskTreasuryFunds, feeToken, resolverHash));
     }
 }
