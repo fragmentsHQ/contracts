@@ -4,24 +4,67 @@
 // You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
-const hre = require("hardhat");
+const hre = require("hardhat"); 
 
-async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+const deployGoerli = async () => {
+  const Fragments = await hre.ethers.getContractFactory("Fragments");
+  const fragments = await Fragments.deploy(
+    "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
+    "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    "0xc1C6805B857Bef1f412519C4A842522431aFed39"
+  )
 
-  const lockedAmount = hre.ethers.utils.parseEther("0.001");
-
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
+  await fragments.deployed();
 
   console.log(
-    `Lock with ${ethers.utils.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
+    `Deployed to ${fragments.address}`
   );
+
+
+  await hre.run("verify:verify", {
+    address: fragments.address,
+    constructorArguments: [
+      "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
+      "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "0xc1C6805B857Bef1f412519C4A842522431aFed39"
+    ],
+  });
+}
+
+const deployMumbai = async () => {
+  const Fragments = await hre.ethers.getContractFactory("Fragments");
+  const fragments = await Fragments.deploy(
+    "0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
+    "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"
+  )
+
+  await fragments.deployed();
+
+  console.log(
+    `Deployed to ${fragments.address}`
+  );
+
+  await hre.run("verify:verify", {
+    address: fragments.address,
+    constructorArguments: [
+      "0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
+      "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"
+    ],
+  });
+}
+
+async function main() {
+  const chainId = hre.network.config.chainId;
+  console.log(chainId);
+
+  if (chainId == 5) {
+    deployGoerli();
+  } else if (chainId == 80001) {
+    deployMumbai();
+  }
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
