@@ -13,14 +13,14 @@ abstract contract OpsTaskCreator is OpsReady {
     address public fundsOwner;
     ITaskTreasuryUpgradable public taskTreasury;
 
-    function initialize(
+    function Ops__initialize(
         address _ops,
         address _fundsOwner
     ) public onlyInitializing {
+        OpsReady.__initialize(_ops, address(this));
+
         fundsOwner = _fundsOwner;
         taskTreasury = ops.taskTreasury();
-
-        OpsReady.__initialize(_ops, address(this));
     }
 
     /**

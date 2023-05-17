@@ -25,7 +25,7 @@ contract Fragments is OpsTaskCreator {
 
     fallback() external payable {}
 
-    uint256 public FEES = 10000;
+    uint256 public FEES;
 
     enum Option {
         TIME,
@@ -90,8 +90,9 @@ contract Fragments is OpsTaskCreator {
         swapRouter = _swapRouter;
         isTransferring = true;
         price = 100;
+        FEES = 10000;
         // priceFeed = AggregatorV3Interface(chainLink);
-        OpsTaskCreator.initialize(_ops, msg.sender);
+        OpsTaskCreator.Ops__initialize(_ops, msg.sender);
     }
 
     // constructor(

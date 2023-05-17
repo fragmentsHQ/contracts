@@ -8,51 +8,49 @@ const hre = require("hardhat");
 
 const deployGoerli = async () => {
   const Fragments = await hre.ethers.getContractFactory("Fragments");
-  const fragments = await Fragments.deploy(
-    "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
-    "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-    "0xc1C6805B857Bef1f412519C4A842522431aFed39"
-  )
+  const fragments = await hre.upgrades.deployProxy(Fragments, ["0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
+  "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  "0xc1C6805B857Bef1f412519C4A842522431aFed39"]);
 
   await fragments.deployed();
+  
 
   console.log(
     `Deployed to ${fragments.address}`
   );
 
 
-  await hre.run("verify:verify", {
-    address: fragments.address,
-    constructorArguments: [
-      "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
-      "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-      "0xc1C6805B857Bef1f412519C4A842522431aFed39"
-    ],
-  });
+  // await hre.run("verify:verify", {
+  //   address: fragments.address,
+  //   constructorArguments: [
+  //     "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
+  //     "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  //     "0xc1C6805B857Bef1f412519C4A842522431aFed39"
+  //   ],
+  // });
 }
 
 const deployMumbai = async () => {
   const Fragments = await hre.ethers.getContractFactory("Fragments");
-  const fragments = await Fragments.deploy(
-    "0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
-    "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-    "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"
-  )
+  const fragments = await hre.upgrades.deployProxy(Fragments, ["0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
+  "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"]);
 
   await fragments.deployed();
+  
 
   console.log(
     `Deployed to ${fragments.address}`
   );
 
-  await hre.run("verify:verify", {
-    address: fragments.address,
-    constructorArguments: [
-      "0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
-      "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-      "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"
-    ],
-  });
+  // await hre.run("verify:verify", {
+  //   address: fragments.address,
+  //   constructorArguments: [
+  //     "0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
+  //     "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  //     "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"
+  //   ],
+  // });
 }
 
 async function main() {
@@ -64,6 +62,7 @@ async function main() {
   } else if (chainId == 80001) {
     deployMumbai();
   }
+  deployMumbai();
 
 }
 
