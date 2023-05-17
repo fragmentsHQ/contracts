@@ -31,13 +31,36 @@ contract Fragments is OpsTaskCreator {
         CONTRACT_VARIBLES
     }
 
+    struct PRICE_FEED {
+        address _to;
+        uint256 _amount;
+        int256 _price;
+        address _fromToken;
+        address _toToken;
+        uint256 _toChain;
+        uint32 destinationDomain;
+        uint256 relayerFee;
+    }
+
+    struct TIME {
+        address _to;
+        uint256 _amount;
+        uint256 _interval;
+        address _fromToken;
+        address _toToken;
+        uint256 _toChain;
+        uint32 destinationDomain;
+        uint256 relayerFee;
+    }
+
     IConnext public immutable connext;
     ISwapRouter public immutable swapRouter;
 
-    uint256 public out;
     address public constant WETH = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
 
     mapping(bytes32 => address) internal _createdJobs;
+    mapping(address => uint256) public balances;
+    mapping()
 
     constructor(IConnext _connext, ISwapRouter _swapRouter, address payable _ops) OpsTaskCreator(_ops, msg.sender) {
         connext = _connext;
@@ -211,7 +234,7 @@ contract Fragments is OpsTaskCreator {
     ) external {
         require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
 
-        IERC20(_fromToken).transfer(msg.sender, _amount);
+        IERC20(_fromToken).transferFrom(msg.sender, address(this), _amount);
 
         bytes32 _id = _gelatoTimeJobCreator(
             _to, _amount, _interval, _fromToken, _toToken, _toChain, destinationDomain, relayerFee
@@ -300,7 +323,7 @@ contract Fragments is OpsTaskCreator {
     ) external {
         require(IERC20(_fromToken).allowance(_from, address(this)) >= _amount, "User must approve amount");
 
-        IERC20(_fromToken).transfer(_from, _amount);
+        IERC20(_fromToken).transferFrom(msg.sender, address(this), _amount);
 
         bytes32 _id = _gelatoPriceFeedJobCreator(
             _from, _to, _amount, _price, _fromToken, _toToken, _toChain, destinationDomain, relayerFee
