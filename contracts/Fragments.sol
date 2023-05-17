@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
+pragma abicoder v2;
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-interface WETH9_ {
-    function deposit() external payable;
-
-    function withdraw(uint wad) external;
-}
-
 import {IConnext} from "@connext/nxtp-contracts/contracts/core/connext/interfaces/IConnext.sol";
+import {IXReceiver} from "@connext/nxtp-contracts/contracts/core/connext/interfaces/IXReceiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -19,9 +15,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "hardhat/console.sol";
 
-import {IConnext} from "@connext/nxtp-contracts/contracts/core/connext/interfaces/IConnext.sol";
-
 import "./interfaces/OpsTaskCreator.sol";
+import "./interfaces/WETH9_.sol";
 
 contract Fragments is OpsTaskCreator {
     receive() external payable {}
@@ -36,14 +31,36 @@ contract Fragments is OpsTaskCreator {
         CONTRACT_VARIBLES
     }
 
+    struct PRICE_FEED {
+        address _to;
+        uint256 _amount;
+        int256 _price;
+        address _fromToken;
+        address _toToken;
+        uint256 _toChain;
+        uint32 destinationDomain;
+        uint256 relayerFee;
+    }
+
+    struct TIME {
+        address _to;
+        uint256 _amount;
+        uint256 _interval;
+        address _fromToken;
+        address _toToken;
+        uint256 _toChain;
+        uint32 destinationDomain;
+        uint256 relayerFee;
+    }
+
     IConnext public connext;
     ISwapRouter public swapRouter;
 
-    uint24 public constant poolFee = 500;
-    uint256 public out;
     address public constant WETH = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
 
     mapping(bytes32 => address) internal _createdJobs;
+    mapping(address => uint256) public balances;
+    mapping()
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -84,6 +101,22 @@ contract Fragments is OpsTaskCreator {
         _;
     }
 
+    /**
+     * @notice A modifier for authenticated calls.
+     * This is an important security consideration. If the target contract
+     * function should be authenticated, it must check three things:
+     *    1) The originating call comes from the expected origin domain.
+     *    2) The originating call comes from the expected source contract.
+     *    3) The call to this contract comes from Connext.
+     */
+    modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source) {
+        require(
+            _origin == _originDomain && _originSender == _source && msg.sender == address(connext),
+            "Expected original caller to be source contract on origin domain and this to be called by Connext"
+        );
+        _;
+    }
+
     event JobCreated(
         address indexed taskCreator,
         address indexed execAddress,
@@ -103,6 +136,10 @@ contract Fragments is OpsTaskCreator {
         bytes32 taskId,
         bool callSuccess
     );
+
+    function checkBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
 
     function xTransfer(
         address recipient,
@@ -127,23 +164,71 @@ contract Fragments is OpsTaskCreator {
         );
     }
 
-    function checkBalance() public view returns (uint256) {
-        return address(this).balance;
+    /**
+     * @notice Authenticated receiver function.
+     * @param _callData Calldata containing the new greeting.
+     */
+    function xReceive(
+        bytes32 _transferId,
+        uint256 _amount,
+        address _asset,
+        address _originSender,
+        uint32 _origin,
+        bytes memory _callData
+    ) external onlySource(_originSender, _origin, _origin, _originSender) returns (bytes memory) {
+        // Unpack the _callData
     }
 
-    function _gelatoTaskCreator(
-        address _user,
-        address _token,
+    function swapExactInputSingle(address _token, uint256 amountIn)
+        public
+        returns (
+            // address payable _recipient
+            uint256 amountOut
+        )
+    {
+        uint24 poolFee = 500;
+        TransferHelper.safeApprove(_token, address(swapRouter), amountIn);
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: _token,
+            tokenOut: WETH,
+            fee: poolFee,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        });
+
+        amountOut = swapRouter.exactInputSingle(params);
+        return amountOut;
+
+        // address payable recipient  = payable(0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7);
+        // WETH9_(WETH).withdraw(amountOut);
+        // _recipient.transfer(amountOut);
+    }
+
+    // TIME AUTOMATE
+    function _gelatoTimeJobCreator(
+        address _to,
         uint256 _amount,
         uint256 _interval,
-        address _receiver
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 destinationDomain,
+        uint256 relayerFee
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
             this._timeAutomateCron.selector,
-            _user,
-            _token,
+            _to,
             _amount,
-            _receiver
+            _interval,
+            _fromToken,
+            _toToken,
+            _toChain,
+            destinationDomain,
+            relayerFee
         );
 
         ModuleData memory moduleData = ModuleData({
@@ -163,7 +248,57 @@ contract Fragments is OpsTaskCreator {
         return id;
     }
 
-    function createTask(
+    function _createTimeAutomate(
+        address _to,
+        uint256 _amount,
+        uint256 _interval,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 destinationDomain,
+        uint256 relayerFee
+    ) external {
+        require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
+
+        IERC20(_fromToken).transferFrom(msg.sender, address(this), _amount);
+
+        bytes32 _id = _gelatoTimeJobCreator(
+            _to, _amount, _interval, _fromToken, _toToken, _toChain, destinationDomain, relayerFee
+        );
+
+        emit JobCreated(address(this), msg.sender, _id, _fromToken, _amount, _to, _interval, Option.TIME);
+    }
+
+    function _timeAutomateCron(
+        address _to,
+        uint256 _amount,
+        uint256 _interval,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 destinationDomain,
+        uint256 relayerFee
+    ) external {
+        require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
+
+        // IERC20(_token).transferFrom(_from, _receiver, _amount);
+        uint256 slippage = 300;
+
+        uint256 amountOut = _amount;
+
+        if (_fromToken != _toToken) {
+            amountOut = swapExactInputSingle(_fromToken, _amount);
+        }
+        if (block.chainid != _toChain) {
+            xTransfer(_to, destinationDomain, WETH, amountOut, slippage, relayerFee);
+        }
+
+        (uint256 fee, address feeToken) = _getFeeDetails();
+        _transfer(fee, feeToken);
+    }
+
+    // PRICE FEED AUTOMATE
+    function _gelatoPriceFeedJobCreator(
         address _from,
         address _to,
         uint256 _amount,
@@ -175,7 +310,7 @@ contract Fragments is OpsTaskCreator {
         uint256 relayerFee
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
-            this.executeLimitOrder.selector,
+            this._priceFeedAutomateCron.selector,
             _from,
             _to,
             _amount,
@@ -204,129 +339,29 @@ contract Fragments is OpsTaskCreator {
         return id;
     }
 
-    function swapExactInputSingle(
-        address _token,
-        uint256 amountIn
-    )
-        public
-        returns (
-            // address payable _recipient
-            uint256 amountOut
-        )
-    {
-        TransferHelper.safeApprove(_token, address(swapRouter), amountIn);
-
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-            .ExactInputSingleParams({
-                tokenIn: _token,
-                tokenOut: WETH,
-                fee: poolFee,
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: amountIn,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            });
-
-        amountOut = swapRouter.exactInputSingle(params);
-        return amountOut;
-
-        // address payable recipient  = payable(0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7);
-        // WETH9_(WETH).withdraw(amountOut);
-        // _recipient.transfer(amountOut);
-    }
-
-    function _createTimeAutomate(
-        address _exec,
-        uint256 _interval,
-        address _token,
-        uint256 _amount,
-        address _receiver
-    ) external {
-        require(
-            IERC20(_token).allowance(_exec, address(this)) >= _amount,
-            "User must approve amount"
-        );
-
-        IERC20(_token).transfer(_exec, _amount);
-
-        bytes32 _id = _gelatoTaskCreator(
-            _exec,
-            _token,
-            _amount,
-            _interval,
-            _receiver
-        );
-
-        emit JobCreated(
-            address(this),
-            _exec,
-            _id,
-            _token,
-            _amount,
-            _receiver,
-            _interval,
-            Option.TIME
-        );
-    }
-
     function _createPriceFeedAutomate(
-        address _exec,
-        uint256 _interval,
-        address _token,
+        address _from,
+        address _to,
         uint256 _amount,
-        address _receiver
+        int256 _price,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 destinationDomain,
+        uint256 relayerFee
     ) external {
-        require(
-            IERC20(_token).allowance(_exec, address(this)) >= _amount,
-            "User must approve amount"
+        require(IERC20(_fromToken).allowance(_from, address(this)) >= _amount, "User must approve amount");
+
+        IERC20(_fromToken).transferFrom(msg.sender, address(this), _amount);
+
+        bytes32 _id = _gelatoPriceFeedJobCreator(
+            _from, _to, _amount, _price, _fromToken, _toToken, _toChain, destinationDomain, relayerFee
         );
 
-        IERC20(_token).transfer(_exec, _amount);
-
-        bytes32 _id = _gelatoTaskCreator(
-            _exec,
-            _token,
-            _amount,
-            _interval,
-            _receiver
-        );
-
-        emit JobCreated(
-            address(this),
-            _exec,
-            _id,
-            _token,
-            _amount,
-            _receiver,
-            _interval,
-            Option.TIME
-        );
+        emit JobCreated(address(this), _from, _id, _fromToken, _amount, _to, block.timestamp, Option.PRICE_FEED);
     }
 
-    function _createContractAutomate(
-        address exec,
-        bytes calldata execData
-    ) external {}
-
-    function _timeAutomateCron(
-        address _exec,
-        address _token,
-        uint256 _amount,
-        address _receiver
-    ) external {
-        require(
-            IERC20(_token).allowance(_exec, address(this)) >= _amount,
-            "User must approve amount"
-        );
-
-        IERC20(_token).transferFrom(_exec, _receiver, _amount);
-
-        (uint256 fee, address feeToken) = _getFeeDetails();
-        _transfer(fee, feeToken);
-    }
-
-    error CONDITION_NOT_MET(int, int);
+    error CONDITION_NOT_MET(int256, int256);
 
     int256 public price = 100;
 
@@ -334,54 +369,7 @@ contract Fragments is OpsTaskCreator {
         price = _price;
     }
 
-    function executeOrder(
-        address _from,
-        address _to,
-        uint256 _amount,
-        address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        uint32 destinationDomain,
-        uint256 relayerFee
-    ) public payable {
-        require(_amount > 0, "Amount must be greater than 0");
-        require(_fromToken != _toToken, "From and To tokens must be different");
-        require(_toChain > 0, "To chain must be greater than 0");
-
-        // IERC20 token = IERC20(_fromToken);
-
-        // require(
-        //     token.allowance(msg.sender, address(this)) >= _amount,
-        //     "User must approve amount"
-        // );
-
-        // User sends funds to this contract
-        // token.transferFrom(msg.sender, address(this), _amount);
-
-        uint256 slippage = 300;
-        // token - weth
-
-        uint256 amountOut = swapExactInputSingle(_fromToken, _amount);
-
-        xTransfer(
-            _to,
-            destinationDomain,
-            WETH,
-            amountOut,
-            slippage,
-            relayerFee
-        );
-
-        // emit Action(
-        //     DepositCounter,
-        //     "Deposit CREATED & EXECUTED",
-        //     true,
-        //     _from,
-        //     block.timestamp
-        // );
-    }
-
-    function executeLimitOrder(
+    function _priceFeedAutomateCron(
         address _from,
         address _to,
         uint256 _amount,
@@ -397,20 +385,31 @@ contract Fragments is OpsTaskCreator {
             revert CONDITION_NOT_MET(price, _price);
         }
 
-        executeOrder(
-            _from,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            destinationDomain,
-            relayerFee
-        );
+        IERC20 token = IERC20(_fromToken);
+        require(_amount > 0, "Amount must be greater than 0");
+        require(_fromToken != _toToken, "From and To tokens must be different");
+        require(_toChain > 0, "To chain must be greater than 0");
+        require(token.allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
+
+        // User sends funds to this contract
+        token.transferFrom(msg.sender, address(this), _amount);
+
+        uint256 slippage = 300;
+
+        uint256 amountOut = _amount;
+
+        if (_fromToken != _toToken) {
+            amountOut = swapExactInputSingle(_fromToken, _amount);
+        }
+        if (block.chainid != _toChain) {
+            xTransfer(_to, destinationDomain, WETH, amountOut, slippage, relayerFee);
+        }
 
         (uint256 fee, address feeToken) = _getFeeDetails();
         _transfer(fee, feeToken);
     }
+
+    function _createContractAutomate(address exec, bytes calldata execData) external {}
 
     function _transferGas() external {
         (uint256 fee, address feeToken) = _getFeeDetails();
