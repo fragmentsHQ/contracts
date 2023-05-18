@@ -1097,6 +1097,182 @@
           }
         }
       }
+    },
+    "23bf82b84b64d9c4732e99a2bfb97a1756a55f58592a66de245f777222e58b7b": {
+      "address": "0xD5f46885767983aAFC993DBE0775A40C78c6e78C",
+      "txHash": "0xb1202e97b22f96821bea84691b7ef7e26228237ae1f005eb055cd3b1ea7082c4",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "ops",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IOps)13210",
+            "contract": "OpsReady",
+            "src": "contracts\\interfaces\\OpsReady.sol:15"
+          },
+          {
+            "label": "dedicatedMsgSender",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "OpsReady",
+            "src": "contracts\\interfaces\\OpsReady.sol:16"
+          },
+          {
+            "label": "_gelato",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "OpsReady",
+            "src": "contracts\\interfaces\\OpsReady.sol:17"
+          },
+          {
+            "label": "fundsOwner",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "OpsTaskCreator",
+            "src": "contracts\\interfaces\\OpsTaskCreator.sol:13"
+          },
+          {
+            "label": "taskTreasury",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(ITaskTreasuryUpgradable)13229",
+            "contract": "OpsTaskCreator",
+            "src": "contracts\\interfaces\\OpsTaskCreator.sol:14"
+          },
+          {
+            "label": "FEES",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "Fragments",
+            "src": "contracts\\Fragments.sol:28"
+          },
+          {
+            "label": "connext",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_contract(IConnext)1120",
+            "contract": "Fragments",
+            "src": "contracts\\Fragments.sol:70"
+          },
+          {
+            "label": "swapRouter",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_contract(ISwapRouter)11457",
+            "contract": "Fragments",
+            "src": "contracts\\Fragments.sol:71"
+          },
+          {
+            "label": "_createdJobs",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_bytes32,t_address)",
+            "contract": "Fragments",
+            "src": "contracts\\Fragments.sol:75"
+          },
+          {
+            "label": "userBalance",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "Fragments",
+            "src": "contracts\\Fragments.sol:77"
+          },
+          {
+            "label": "isTransferring",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_bool",
+            "contract": "Fragments",
+            "src": "contracts\\Fragments.sol:118"
+          },
+          {
+            "label": "price",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_int256",
+            "contract": "Fragments",
+            "src": "contracts\\Fragments.sol:448"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IConnext)1120": {
+            "label": "contract IConnext",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IOps)13210": {
+            "label": "contract IOps",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISwapRouter)11457": {
+            "label": "contract ISwapRouter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ITaskTreasuryUpgradable)13229": {
+            "label": "contract ITaskTreasuryUpgradable",
+            "numberOfBytes": "20"
+          },
+          "t_int256": {
+            "label": "int256",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_address)": {
+            "label": "mapping(bytes32 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
     }
   }
 }
