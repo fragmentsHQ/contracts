@@ -15,11 +15,9 @@ module.exports = {
     }
   },
   networks: {
-    
     hardhat: {
       forking: {
-        url: process.env.ALCHEMY_MUMBAI_API_URL,
-        blockNumber: 35708158
+        url: process.env.ALCHEMY_MUMBAI_API_URL
       }
     },
     goerli: {
@@ -30,25 +28,22 @@ module.exports = {
     mumbai: {
       chainId: 80001,
       url: process.env.ALCHEMY_MUMBAI_API_URL,
-      accounts: [process.env.PRIVATE_KEY],
-      gasPrice: 1000000000000,
+      accounts: [process.env.PRIVATE_KEY]
     },
-    // gnosis: {
-    //   chainId: 100,
-    //   url: process.env.ALCHEMY_GNOSIS_API_URL,
-    //   accounts: [process.env.PRIVATE_KEY2]
-    // },
-    // polygon: {
-    //   chainId: 137,
-    //   url: process.env.ALCHEMY_POLYGON_API_URL,
-    //   accounts: [process.env.PRIVATE_KEY]
-    // },
+    gnosis: {
+      chainId: 100,
+      url: process.env.ALCHEMY_GNOSIS_API_URL,
+      accounts: [process.env.PRIVATE_KEY2]
+    },
+    polygon: {
+      chainId: 137,
+      url: process.env.ALCHEMY_POLYGON_API_URL,
+      accounts: [process.env.PRIVATE_KEY]
+    },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
-    // apiKey: process.env.POLYGONSCAN_API_KEY
-  },
-  polygonscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY
+    apiKey: {
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY
+    }
   }
 };
