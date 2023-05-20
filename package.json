@@ -23,9 +23,11 @@
   "dependencies": {
     "@chainlink/contracts": "^0.6.1",
     "@connext/nxtp-contracts": "^0.2.1-rc.16",
+    "@connext/smart-contracts": "^2.0.0-alpha.1",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@openzeppelin/contracts": "^4.8.3",
     "@openzeppelin/contracts-upgradeable": "^4.8.3",
+    "@superfluid-finance/ethereum-contracts": "^1.6.0",
     "@uniswap/v3-periphery": "^1.4.3",
     "dotenv": "^16.0.3"
   }
