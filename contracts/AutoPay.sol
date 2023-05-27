@@ -33,28 +33,6 @@ contract Fragments is OpsTaskCreator {
         CONTRACT_VARIBLES
     }
 
-    struct PRICE_FEED {
-        address _to;
-        uint256 _amount;
-        int256 _price;
-        address _fromToken;
-        address _toToken;
-        uint256 _toChain;
-        uint32 destinationDomain;
-        uint256 relayerFee;
-    }
-
-    struct TIME {
-        address _to;
-        uint256 _amount;
-        uint256 _interval;
-        address _fromToken;
-        address _toToken;
-        uint256 _toChain;
-        uint32 destinationDomain;
-        uint256 relayerFee;
-    }
-
     event FundsDeposited(address indexed sender, address indexed token, uint256 indexed amount);
     event FundsWithdrawn(address indexed receiver, address indexed initiator, address indexed token, uint256 amount);
 
@@ -63,7 +41,14 @@ contract Fragments is OpsTaskCreator {
 
     address public constant WETH = 0xFD2AB41e083c75085807c4A65C0A14FDD93d55A9;
 
-    mapping(bytes32 => address) internal _createdJobs;
+    struct user {
+        address _user;
+        uint256 _totalCycles;
+        uint256 _executedCycles;
+        bytes32 _gelatoTaskID;
+    }
+
+    mapping(bytes32 => user) public _createdJobs;
     mapping(address => mapping(address => uint256)) public userBalance;
 
     constructor(IConnext _connext, ISwapRouter _swapRouter, address payable _ops) OpsTaskCreator(_ops, msg.sender) {
@@ -218,83 +203,113 @@ contract Fragments is OpsTaskCreator {
         // _recipient.transfer(amountOut);
     }
 
+    function _cancelJob(bytes32 _jobId) public {
+
+    }
+
     // TIME AUTOMATE
     function _gelatoTimeJobCreator(
         address _from,
         address _to,
         uint256 _amount,
-        uint256 _interval,
         address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        address _destinationContract,
-        uint32 _destinationDomain,
-        uint256 _relayerFeeInTransactingAsset
+        address _toToken, 
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
             this._timeAutomateCron.selector,
             _from,
             _to,
             _amount,
-            _interval,
             _fromToken,
             _toToken,
-            _toChain,
-            _destinationContract,
-            _destinationDomain,
-            _relayerFeeInTransactingAsset
+            _connextModule,
+            _gelatoModule
         );
 
-        ModuleData memory moduleData = ModuleData({modules: new Module[](2), args: new bytes[](2)});
+         ModuleData memory moduleData;
+
+        
+        moduleData = ModuleData({modules: new Module[](2), args: new bytes[](2)});
         moduleData.modules[0] = Module.TIME;
         moduleData.modules[1] = Module.PROXY;
 
-        moduleData.args[0] = _timeModuleArg(block.timestamp + _interval, _interval);
+        moduleData.args[0] = _timeModuleArg(_gelatoModule._startTime, _gelatoModule._interval);
         moduleData.args[1] = _proxyModuleArg();
+
 
         bytes32 id = _createTask(address(this), execData, moduleData, ETH);
         return id;
     }
 
+    /* 
+        _cycles
+        0 = infinite
+        any number = number of cycles
+    */
+
+    struct connextModule {
+        uint256 _toChain;
+        uint32 _destinationDomain;
+        address _destinationContract;
+        uint256 _relayerFeeInTransactingAsset;
+    }
+
+    struct gelatoModule {
+        uint256 _cycles;
+        uint256 _startTime;
+        uint256 _interval;
+    }
+
     function _createTimeAutomate(
         address _to,
         uint256 _amount,
-        uint256 _interval,
         address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        address _destinationContract,
-        uint32 _destinationDomain,
-        uint256 _relayerFeeInTransactingAsset
+        address _toToken, 
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule
     ) public {
         require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
+
 
         bytes32 _id = _gelatoTimeJobCreator(
             msg.sender,
             _to,
             _amount,
-            _interval,
             _fromToken,
             _toToken,
-            _toChain,
-            _destinationContract,
-            _destinationDomain,
-            _relayerFeeInTransactingAsset
+            _connextModule,
+            _gelatoModule
         );
 
-        emit JobCreated(address(this), msg.sender, _id, _fromToken, _amount, _to, _interval, Option.TIME);
+        bytes32 _jobId = _getAutomateJobId(
+                            msg.sender,
+                            _to,
+                            _amount,
+                            _fromToken,
+                            _toToken,
+                            _connextModule,
+                            _gelatoModule
+                        );
+
+        _createdJobs[_jobId] = user(
+            msg.sender,
+            _gelatoModule._cycles,
+            0,
+            _id
+        );
+
+        emit JobCreated(address(this), msg.sender, _id, _fromToken, _amount, _to, _gelatoModule._interval, Option.TIME);
     }
 
     function _createMultipleTimeAutomate(
         address[] calldata _to,
         uint256[] calldata _amount,
-        uint256 _interval,
         address _fromToken,
         address _toToken,
-        uint256 _toChain,
-        address _destinationContract,
-        uint32 _destinationDomain,
-        uint256 _relayerFeeInTransactingAsset
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule
     )  external {
         uint256 totalAmount;
         for (uint i = 0; i < _to.length; i++) {
@@ -307,13 +322,10 @@ contract Fragments is OpsTaskCreator {
             _createTimeAutomate(
                  _to[i],
                  _amount[i],
-                 _interval,
                  _fromToken,
                  _toToken,
-                 _toChain,
-                 _destinationContract,
-                 _destinationDomain,
-                 _relayerFeeInTransactingAsset
+                 _connextModule,
+                 _gelatoModule
             ); 
         }
     }
@@ -322,13 +334,10 @@ contract Fragments is OpsTaskCreator {
         address _from,
         address _to,
         uint256 _amount,
-        uint256 _interval,
         address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        address _destinationContract,
-        uint32 _destinationDomain,
-        uint256 _relayerFeeInTransactingAsset
+        address _toToken, 
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule
     ) external {
         require(IERC20(_fromToken).allowance(_from, address(this)) >= _amount, "User must approve amount");
 
@@ -337,177 +346,39 @@ contract Fragments is OpsTaskCreator {
 
         uint256 amountOut = _amount;
 
-        if (block.chainid == _toChain && _fromToken != _toToken) {
+        if (block.chainid == _connextModule._toChain && _fromToken != _toToken) {
             amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
             IERC20(_toToken).transferFrom(address(this), _to, amountOut);
-        } else if (block.chainid != _toChain) {
+        } else if (block.chainid != _connextModule._toChain) {
             xTransfer(
                 _to,
-                _destinationContract,
-                _destinationDomain,
+                _connextModule._destinationContract,
+                _connextModule._destinationDomain,
                 _fromToken,
                 _toToken,
                 amountOut,
                 slippage,
-                _relayerFeeInTransactingAsset
+                _connextModule._relayerFeeInTransactingAsset
             );
         } else {
             IERC20(_fromToken).transferFrom(address(this), _to, _amount);
         }
 
-        (uint256 fee, address feeToken) = _getFeeDetails();
-        _transfer(fee, feeToken);
-    }
+        bytes32 _jobId = _getAutomateJobId(
+                            _from,
+                            _to,
+                            _amount,
+                            _fromToken,
+                            _toToken,
+                            _connextModule,
+                            _gelatoModule
+         );        
 
-    // PRICE FEED AUTOMATE
-    function _gelatoPriceFeedJobCreator(
-        address _from,
-        address _to,
-        uint256 _amount,
-        int256 _price,
-        address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        address _destinationContract,
-        uint32 _destinationDomain,
-        uint256 _relayerFeeInTransactingAsset
-    ) internal returns (bytes32) {
-        bytes memory execData = abi.encodeWithSelector(
-            this._priceFeedAutomateCron.selector,
-            _from,
-            _to,
-            _amount,
-            _price,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationContract,
-            _destinationDomain,
-            _relayerFeeInTransactingAsset
-        );
-
-        ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
-
-        moduleData.modules[0] = Module.TIME;
-        moduleData.modules[1] = Module.PROXY;
-        moduleData.modules[2] = Module.SINGLE_EXEC;
-
-        moduleData.args[0] = _timeModuleArg(block.timestamp, 5);
-        moduleData.args[1] = _proxyModuleArg();
-        moduleData.args[2] = _singleExecModuleArg();
-
-        bytes32 id = _createTask(address(this), execData, moduleData, ETH);
-        return id;
-    }
-
-    error CONDITION_NOT_MET(int256, int256);
-    int256 public price;
-    function changePrice(int256 _price) public {
-        price = _price;
-    }
-
-    function _createPriceFeedAutomate(
-        address _to,
-        uint256 _amount,
-        int256 _price,
-        address _fromToken,
-        address _toToken,
-         uint256 _toChain,
-        address _destinationContract,
-        uint32 _destinationDomain,
-        uint256 _relayerFeeInTransactingAsset
-    ) public {
-        require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
-
-        IERC20(_fromToken).transferFrom(msg.sender, address(this), _amount);
-
-        bytes32 _id = _gelatoPriceFeedJobCreator(
-            msg.sender, _to, _amount, _price, _fromToken, _toToken, _toChain,_destinationContract, _destinationDomain, _relayerFeeInTransactingAsset
-        );
-
-        emit JobCreated(address(this), msg.sender, _id, _fromToken, _amount, _to, block.timestamp, Option.PRICE_FEED);
-    }
-
-    function _createMultiplePriceFeedAutomate(
-        address[] calldata _to,
-        uint256[] calldata _amount,
-        int256 _price,
-        address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        address _destinationContract,
-        uint32 _destinationDomain,
-        uint256 _relayerFeeInTransactingAsset
-    )  external {
-        uint256 totalAmount;
-        for (uint i = 0; i < _to.length; i++) {
-            totalAmount += _amount[i];
-        }
-
-        require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= totalAmount, "User must approve amount");
-
-        for (uint i = 0; i < _to.length; i++) {
-            _createPriceFeedAutomate(
-                 _to[i],
-                 _amount[i],
-                 _price,
-                 _fromToken,
-                 _toToken,
-                 _toChain,
-                 _destinationContract,
-                 _destinationDomain,
-                 _relayerFeeInTransactingAsset
-            ); 
-        }
-    }
-
-
-    function _priceFeedAutomateCron(
-        address _from,
-        address _to,
-        uint256 _amount,
-        int256 _price,
-        address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        address _destinationContract,
-        uint32 _destinationDomain,
-        uint256 _relayerFeeInTransactingAsset
-    ) public payable {
-        // int price = getLatestPrice();
-        if (price != _price) {
-            revert CONDITION_NOT_MET(price, _price);
-        }
-
-        IERC20 token = IERC20(_fromToken);
-        require(_amount > 0, "Amount must be greater than 0");
-        require(_fromToken != _toToken, "From and To tokens must be different");
-        require(_toChain > 0, "To chain must be greater than 0");
-        require(token.allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
-
-        // User sends funds to this contract
-        token.transferFrom(msg.sender, address(this), _amount);
-
-        uint256 slippage = 300;
-
-        uint256 amountOut = _amount;
-
-         if (_fromToken != _toToken && block.chainid == _toChain) {
-            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
-            IERC20(_toToken).transferFrom(address(this), _to, amountOut);
-        } else if (block.chainid != _toChain) {
-            xTransfer(
-                _to,
-                _destinationContract,
-                _destinationDomain,
-                _fromToken,
-                _toToken,
-                amountOut,
-                slippage,
-                _relayerFeeInTransactingAsset
-            );
-        } else {
-            IERC20(_fromToken).transferFrom(address(this), _to, _amount);
+        user memory userInfo = _createdJobs[_jobId];
+        userInfo._executedCycles++;
+        
+        if(userInfo._executedCycles == userInfo._totalCycles){
+            _cancelJob(_jobId);
         }
 
         (uint256 fee, address feeToken) = _getFeeDetails();
@@ -546,15 +417,29 @@ contract Fragments is OpsTaskCreator {
         return IERC20(_address).balanceOf(address(this));
     }
 
-    function getJobId(
-        address taskCreator,
-        address execAddress,
-        bytes4 execSelector,
-        bool useTaskTreasuryFunds,
-        address feeToken,
-        bytes32 resolverHash
-    ) internal pure returns (bytes32) {
+    function _getAutomateJobId(
+        address _from,
+        address _to,
+        uint256 _amount,
+        address _fromToken,
+        address _toToken, 
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule
+    ) public pure returns (bytes32) {
         return
-            keccak256(abi.encode(taskCreator, execAddress, execSelector, useTaskTreasuryFunds, feeToken, resolverHash));
+            keccak256(abi.encode(
+                _from,
+                _to,
+                _amount,
+                _gelatoModule._cycles,
+                _gelatoModule._startTime,
+                _gelatoModule._interval,
+                _fromToken,
+                _toToken,
+                _connextModule._toChain,
+                _connextModule._destinationContract,
+                _connextModule._destinationDomain,
+                _connextModule._relayerFeeInTransactingAsset
+            ));
     }
 }

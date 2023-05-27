@@ -34,7 +34,7 @@ module.exports = {
     gnosis: {
       chainId: 100,
       url: process.env.ALCHEMY_GNOSIS_API_URL,
-      accounts: [process.env.PRIVATE_KEY2]
+      accounts: [process.env.PRIVATE_KEY]
     },
     polygon: {
       chainId: 137,

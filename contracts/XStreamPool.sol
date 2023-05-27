@@ -111,17 +111,17 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
     /// @dev Rebalances pools. This sends funds over the bridge to the destination.
     function rebalance(
         uint32 destinationDomain,
-        address destinationContract
+        address destinationContract,
+        uint256 relayerFeeInTransactingAsset
     ) external {
-        _sendRebalanceMessage(destinationDomain, destinationContract);
+        _sendRebalanceMessage(destinationDomain, destinationContract, relayerFeeInTransactingAsset);
     }
 
     function xTransfer(
         address _recipient,
         uint32 _originDomain,
         uint256 _amount,
-        // uint256 _slippage,
-        uint256 _relayerFee
+        uint256 relayerFeeInTransactingAsset
     ) internal {
         // This contract approves transfer to Connext
         erc20Token.approve(address(connext), _amount);
@@ -130,12 +130,12 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
         uint256 remainingBalance = _amount -
             superToken.balanceOf(address(this));
 
-        connext.xcall{value: _relayerFee}(
+        connext.xcall(
             _originDomain, // _destination: Domain ID of the destination chain
             _recipient, // _to: address receiving the funds on the destination
             address(erc20Token), // _asset: address of the token contract
             msg.sender, // _delegate: address that can revert or forceLocal on destination
-            remainingBalance, // _amount: amount of tokens to transfer
+            remainingBalance - relayerFeeInTransactingAsset, // _amount: amount of tokens to transfer
             _slippage, // _slippage: the maximum amount of slippage the user will accept in BPS
             "" // _callData: empty because we're only sending funds
         );
@@ -185,13 +185,13 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
         uint256 _streamActionType,
         address _receiver,
         int96 _flowRate,
-        uint256 _relayerFee, // currently hardcoded
+        uint256 relayerFeeInTransactingAsset, // currently hardcoded
         uint256 slippage,
         uint256 cost,
         address bridgingToken,
         address destinationContract,
         uint32 destinationDomain
-    ) public payable {
+    ) public  {
         if (bridgingToken == address(superToken)) {
             // if user is sending Super Tokens
             ISuperToken(superToken).approve(address(this), type(uint256).max);
@@ -215,17 +215,18 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
             _receiver,
             _flowRate,
             block.timestamp,
-            _relayerFee
+            relayerFeeInTransactingAsset
         );
 
-        connext.xcall{value: _relayerFee}(
+        connext.xcall(
             destinationDomain, // _destination: Domain ID of the destination chain
             destinationContract, // _to: contract address receiving the funds on the destination chain
             address(bridgingToken), // _asset: address of the token contract
             msg.sender, // _delegate: address that can revert or forceLocal on destination
-            cost, // _amount: amount of tokens to transfer, // 0 if just sending a message
+            cost - relayerFeeInTransactingAsset, // _amount: amount of tokens to transfer, // 0 if just sending a message
             slippage, // _slippage: the maximum amount of slippage the user will accept in BPS
-            callData // _callData
+            callData, // _callData
+            relayerFeeInTransactingAsset //relayerFeeInTransactingAsset
         );
 
         emit XStreamFlowTrigger(
@@ -237,7 +238,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
             1,
             block.timestamp,
             0,
-            _relayerFee,
+            relayerFeeInTransactingAsset,
             destinationDomain
         );
     }
@@ -247,15 +248,12 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
         int96[] calldata flowRates,
         uint96[] memory costs,
         uint256 _streamActionType,
-        // address receiver,
-        // int96 flowRate,
         uint256 _relayerFee,
         uint256 slippage,
-        // uint256 cost,
         address bridgingToken,
         address destinationContract,
         uint32 destinationDomain
-    ) external payable {
+    ) external  {
         for (uint256 i = 0; i < receivers.length; i++) {
             _sendFlowMessage(
                 _streamActionType,
@@ -274,7 +272,8 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
     /// @dev Sends rebalance message with the full balance of this pool. No need to collect dust.
     function _sendRebalanceMessage(
         uint32 destinationDomain,
-        address destinationContract
+        address destinationContract,
+        uint256 relayerFeeInTransactingAsset
     ) internal {
         uint256 balance = superToken.balanceOf(address(this));
         // downgrade for sending across the bridge
@@ -283,15 +282,14 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
         bytes memory callData = abi.encodeWithSelector(
             IDestinationPool.receiveRebalanceMessage.selector
         );
-        uint256 _relayerFee = 0;
-        uint256 slippage = 0;
-        connext.xcall{value: _relayerFee}(
+
+        connext.xcall(
             destinationDomain, // _destination: Domain ID of the destination chain
             destinationContract, // _to: contract address receiving the funds on the destination chain
             superToken.getUnderlyingToken(), // _asset: address of the token contract
             address(this), // _delegate: address that can revert or forceLocal on destination
-            balance, // _amount: amount of tokens to transfer
-            slippage, // _slippage: the maximum amount of slippage the user will accept in BPS
+            balance - relayerFeeInTransactingAsset, // _amount: amount of tokens to transfer
+            300, // _slippage: the maximum amount of slippage the user will accept in BPS
             callData // _callData
         );
         emit RebalanceMessageSent(balance);
@@ -333,7 +331,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
         uint256 _amount,
         uint256 _startTime,
         uint256 _streamActionType
-    ) public {
+    ) internal {
         // if possible, upgrade all non-super tokens in the pool
         // uint256 balance = IERC20(token.getUnderlyingToken()).balanceOf(address(this));
 
@@ -383,13 +381,14 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
         // emit FlowMessageReceived(account, flowRateAdjusted);
     }
 
-    uint256 public streamActionType; // 1 -> Start stream, 2 -> Topup stream, 3 -> Delete stream
-    address public sender;
-    address public receiver;
-    int96 public flowRate;
-    uint256 public startTime;
-    uint256 public amount;
-    uint256 public relayerFee;
+    struct StreamInfo{
+        uint256  streamActionType; // 1 -> Start stream, 2 -> Topup stream, 3 -> Delete stream
+        address  sender;
+        address  receiver;
+        int96  flowRate;
+        uint256  startTime;
+        uint256  relayerFee;
+    }
 
     function xReceive(
         bytes32 _transferId,
@@ -400,19 +399,19 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
         bytes memory _callData
     ) external returns (bytes memory) {
         // Unpack the _callData
-
+        StreamInfo memory streamInfo;
         (
-            streamActionType,
-            sender,
-            receiver,
-            flowRate,
-            startTime,
-            relayerFee
+            streamInfo.streamActionType,
+            streamInfo.sender,
+            streamInfo.receiver,
+            streamInfo.flowRate,
+            streamInfo.startTime,
+            streamInfo.relayerFee
         ) = abi.decode(
             _callData,
             (uint256, address, address, int96, uint256, uint256)
         );
-        amount = _amount;
+
         emit XReceiveData(
             _originSender,
             _origin,
@@ -420,29 +419,28 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
             _amount,
             _transferId,
             block.timestamp,
-            sender,
-            receiver,
-            flowRate
+            streamInfo.sender,
+            streamInfo.receiver,
+            streamInfo.flowRate
         );
         approveSuperToken(address(_asset), _amount);
         receiveFlowMessage(
-            receiver,
-            flowRate,
+            streamInfo.receiver,
+            streamInfo.flowRate,
             _amount,
-            startTime,
-            streamActionType
+            streamInfo.startTime,
+            streamInfo.streamActionType
         );
 
-        if (streamActionType == 1) {
-            emit StreamStart(msg.sender, receiver, flowRate, startTime);
-        } else if (streamActionType == 2) {
-            emit StreamUpdate(sender, receiver, flowRate, startTime);
+        if (streamInfo.streamActionType == 1) {
+            emit StreamStart(msg.sender, streamInfo.receiver, streamInfo.flowRate, streamInfo.startTime);
+        } else if (streamInfo.streamActionType == 2) {
+            emit StreamUpdate(streamInfo.sender, streamInfo.receiver, streamInfo.flowRate, streamInfo.startTime);
         } else {
-            xTransfer(sender, _origin, _amount, relayerFee);
+            xTransfer(streamInfo.sender, _origin, _amount, streamInfo.relayerFee);
 
-            emit StreamDelete(sender, receiver);
+            emit StreamDelete(streamInfo.sender, streamInfo.receiver);
         }
-        // receiveFlowMessage(receiver, flowRate);
     }
 
     event UpgradeToken(address indexed baseToken, uint256 amount);
