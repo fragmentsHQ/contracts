@@ -18,7 +18,7 @@ import "hardhat/console.sol";
 import "./interfaces/OpsTaskCreator.sol";
 import "./interfaces/WETH9_.sol";
 
-contract Fragments is OpsTaskCreator {
+contract Conditional is OpsTaskCreator {
     using SafeERC20 for IERC20;
 
     receive() external payable {}
