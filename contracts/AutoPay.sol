@@ -30,7 +30,8 @@ contract AutoPay is OpsTaskCreator {
     enum Option {
         TIME,
         PRICE_FEED,
-        CONTRACT_VARIBLES
+        CONTRACT_VARIBLES,
+        GAS_PRICE
     }
 
     event FundsDeposited(address indexed sender, address indexed token, uint256 indexed amount);
@@ -136,7 +137,7 @@ contract AutoPay is OpsTaskCreator {
         uint256 amount,
         uint256 slippage,
         uint256 relayerFeeInTransactingAsset
-    ) public  {
+    ) public {
         IERC20 token = IERC20(fromToken);
         // This contract approves transfer to Connext
         token.approve(address(connext), amount);
@@ -204,40 +205,85 @@ contract AutoPay is OpsTaskCreator {
     }
 
     function _cancelJob(bytes32 _jobId) public {
+        user memory _userInfo = _createdJobs[_jobId];
+        require(_userInfo._user != address(0), "No JOB Found");
 
+        _cancelTask(_userInfo._gelatoTaskID);
+
+        delete _createdJobs[_jobId];
     }
 
     // TIME AUTOMATE
+
+    function _getWeb3FunctionHash(
+        address _from,
+        address _to,
+        uint256 _amount,
+        address _fromToken,
+        address _toToken,
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule
+    ) public pure returns (bytes memory) {
+        bytes memory _data = (abi.encode(_from, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule));
+
+        return _data;
+    }
+
+    // string public _web3FunctionHash;
+
+    // function updateWeb3FunctionHash(string memory _hash) external {
+    //     _web3FunctionHash = _hash;
+    // }
+
     function _gelatoTimeJobCreator(
         address _from,
         address _to,
         uint256 _amount,
         address _fromToken,
-        address _toToken, 
+        address _toToken,
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule,
+        bytes calldata _web3FunctionArgsHex
+    ) public returns (bytes32) {
+        bytes memory execData = abi.encodeWithSelector(
+            this._timeAutomateCron.selector, _from, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule
+        );
+
+        ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
+        moduleData.modules[0] = Module.TIME;
+        moduleData.modules[1] = Module.PROXY;
+        moduleData.modules[2] = Module.WEB3_FUNCTION;
+
+        moduleData.args[0] = _timeModuleArg(_gelatoModule._startTime, _gelatoModule._interval);
+        moduleData.args[1] = _proxyModuleArg();
+        moduleData.args[2] = _web3FunctionModuleArg(_gelatoModule._web3FunctionHash, _web3FunctionArgsHex);
+
+        bytes32 id = _createTask(address(this), execData, moduleData, address(0));
+
+        return id;
+    }
+
+    function _gelatoTimeJobCreator(
+        address _from,
+        address _to,
+        uint256 _amount,
+        address _fromToken,
+        address _toToken,
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
-            this._timeAutomateCron.selector,
-            _from,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _connextModule,
-            _gelatoModule
+            this._timeAutomateCron.selector, _from, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule
         );
 
-         ModuleData memory moduleData;
+        ModuleData memory moduleData;
 
-        
         moduleData = ModuleData({modules: new Module[](2), args: new bytes[](2)});
         moduleData.modules[0] = Module.TIME;
         moduleData.modules[1] = Module.PROXY;
 
         moduleData.args[0] = _timeModuleArg(_gelatoModule._startTime, _gelatoModule._interval);
         moduleData.args[1] = _proxyModuleArg();
-
 
         bytes32 id = _createTask(address(this), execData, moduleData, ETH);
         return id;
@@ -260,45 +306,48 @@ contract AutoPay is OpsTaskCreator {
         uint256 _cycles;
         uint256 _startTime;
         uint256 _interval;
+        string _web3FunctionHash;
     }
 
     function _createTimeAutomate(
         address _to,
         uint256 _amount,
         address _fromToken,
-        address _toToken, 
+        address _toToken,
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public {
         require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
 
+        bytes32 _id =
+            _gelatoTimeJobCreator(msg.sender, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule);
 
-        bytes32 _id = _gelatoTimeJobCreator(
-            msg.sender,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _connextModule,
-            _gelatoModule
-        );
+        bytes32 _jobId =
+            _getAutomateJobId(msg.sender, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule);
 
-        bytes32 _jobId = _getAutomateJobId(
-                            msg.sender,
-                            _to,
-                            _amount,
-                            _fromToken,
-                            _toToken,
-                            _connextModule,
-                            _gelatoModule
-                        );
+        _createdJobs[_jobId] = user(msg.sender, _gelatoModule._cycles, 0, _id);
 
-        _createdJobs[_jobId] = user(
-            msg.sender,
-            _gelatoModule._cycles,
-            0,
-            _id
-        );
+        emit JobCreated(address(this), msg.sender, _id, _fromToken, _amount, _to, _gelatoModule._interval, Option.TIME);
+    }
+
+    function _createTimeAutomate(
+        address _to,
+        uint256 _amount,
+        address _fromToken,
+        address _toToken,
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule,
+        bytes calldata _web3FunctionArgsHex
+    ) public {
+        require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
+
+        bytes32 _id =
+            _gelatoTimeJobCreator(msg.sender, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule);
+
+        bytes32 _jobId =
+            _getAutomateJobId(msg.sender, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule);
+
+        _createdJobs[_jobId] = user(msg.sender, _gelatoModule._cycles, 0, _id);
 
         emit JobCreated(address(this), msg.sender, _id, _fromToken, _amount, _to, _gelatoModule._interval, Option.TIME);
     }
@@ -310,23 +359,16 @@ contract AutoPay is OpsTaskCreator {
         address _toToken,
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
-    )  external {
+    ) external {
         uint256 totalAmount;
-        for (uint i = 0; i < _to.length; i++) {
+        for (uint256 i = 0; i < _to.length; i++) {
             totalAmount += _amount[i];
         }
 
         require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= totalAmount, "User must approve amount");
 
-        for (uint i = 0; i < _to.length; i++) {
-            _createTimeAutomate(
-                 _to[i],
-                 _amount[i],
-                 _fromToken,
-                 _toToken,
-                 _connextModule,
-                 _gelatoModule
-            ); 
+        for (uint256 i = 0; i < _to.length; i++) {
+            _createTimeAutomate(_to[i], _amount[i], _fromToken, _toToken, _connextModule, _gelatoModule);
         }
     }
 
@@ -335,7 +377,7 @@ contract AutoPay is OpsTaskCreator {
         address _to,
         uint256 _amount,
         address _fromToken,
-        address _toToken, 
+        address _toToken,
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) external {
@@ -364,20 +406,12 @@ contract AutoPay is OpsTaskCreator {
             IERC20(_fromToken).transferFrom(address(this), _to, _amount);
         }
 
-        bytes32 _jobId = _getAutomateJobId(
-                            _from,
-                            _to,
-                            _amount,
-                            _fromToken,
-                            _toToken,
-                            _connextModule,
-                            _gelatoModule
-         );        
+        bytes32 _jobId = _getAutomateJobId(_from, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule);
 
         user memory userInfo = _createdJobs[_jobId];
         userInfo._executedCycles++;
-        
-        if(userInfo._executedCycles == userInfo._totalCycles){
+
+        if (userInfo._executedCycles == userInfo._totalCycles) {
             _cancelJob(_jobId);
         }
 
@@ -422,12 +456,12 @@ contract AutoPay is OpsTaskCreator {
         address _to,
         uint256 _amount,
         address _fromToken,
-        address _toToken, 
+        address _toToken,
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public pure returns (bytes32) {
-        return
-            keccak256(abi.encode(
+        return keccak256(
+            abi.encode(
                 _from,
                 _to,
                 _amount,
@@ -440,6 +474,7 @@ contract AutoPay is OpsTaskCreator {
                 _connextModule._destinationContract,
                 _connextModule._destinationDomain,
                 _connextModule._relayerFeeInTransactingAsset
-            ));
+            )
+        );
     }
 }

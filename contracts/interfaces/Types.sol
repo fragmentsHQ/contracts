@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.17;
+pragma solidity ^0.8.12;
 
 enum Module {
     RESOLVER,
     TIME,
     PROXY,
-    SINGLE_EXEC
+    SINGLE_EXEC,
+    WEB3_FUNCTION
 }
 
 struct ModuleData {
@@ -46,4 +47,14 @@ interface ITaskTreasuryUpgradable {
 
 interface IOpsProxyFactory {
     function getProxyOf(address account) external view returns (address, bool);
+}
+
+interface IGelato1Balance {
+    function depositNative(address _sponsor) external payable;
+
+    function depositToken(
+        address _sponsor,
+        address _token,
+        uint256 _amount
+    ) external;
 }
