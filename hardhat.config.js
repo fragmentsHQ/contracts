@@ -1,6 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 require("@nomiclabs/hardhat-etherscan");
+require('solidity-docgen');
 // require("@nomiclabs/hardhat-ethers");
 // require("@nomiclabs/hardhat-waffle");
 
@@ -50,5 +51,6 @@ module.exports = {
   },
   polygonscan: {
     apiKey: process.env.POLYGONSCAN_API_KEY
-  }
+  },
+  docgen: {}
 };

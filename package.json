@@ -33,6 +33,7 @@
     "@openzeppelin/contracts-upgradeable": "^4.8.3",
     "@superfluid-finance/ethereum-contracts": "^1.6.0",
     "@uniswap/v3-periphery": "^1.4.3",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "solidity-docgen": "^0.6.0-beta.35"
   }
 }
