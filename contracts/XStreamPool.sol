@@ -12,7 +12,7 @@ import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/app
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./interfaces/OpsTaskCreator.sol";
+import "./interfaces/AutomateTaskCreator.sol";
 import {IDestinationPool} from "./interfaces/IDestinationPool.sol";
 
 error Unauthorized();
@@ -24,7 +24,7 @@ error StreamAlreadyActive();
 /// @notice This is a super app. On stream (create|update|delete), this contract sends a message
 /// accross the bridge to the DestinationPool.
 
-contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
+contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
     /// @dev Emitted when flow message is sent across the bridge.
     /// @param flowRate Flow Rate, unadjusted to the pool.
     event FlowStartMessage(
@@ -89,7 +89,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, OpsTaskCreator {
         address _connext,
         address _superToken,
         address _erc20Token
-    ) OpsTaskCreator(_ops, msg.sender) {
+    ) AutomateTaskCreator(_ops, msg.sender) {
         host = ISuperfluid(_host);
         cfa = IConstantFlowAgreementV1(_cfa);
         superToken = ISuperToken(_superToken);

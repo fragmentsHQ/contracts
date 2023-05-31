@@ -15,10 +15,10 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "hardhat/console.sol";
 
-import "./interfaces/OpsTaskCreator.sol";
+import "./interfaces/AutomateTaskCreator.sol";
 import "./interfaces/WETH9_.sol";
 
-contract Conditional is OpsTaskCreator {
+contract Conditional is AutomateTaskCreator {
     using SafeERC20 for IERC20;
 
     receive() external payable {}
@@ -51,7 +51,7 @@ contract Conditional is OpsTaskCreator {
     mapping(bytes32 => user) public _createdJobs;
     mapping(address => mapping(address => uint256)) public userBalance;
 
-    constructor(IConnext _connext, ISwapRouter _swapRouter, address payable _ops) OpsTaskCreator(_ops, msg.sender) {
+    constructor(IConnext _connext, ISwapRouter _swapRouter, address payable _ops) AutomateTaskCreator(_ops, msg.sender) {
         connext = _connext;
         swapRouter = _swapRouter;
         // priceFeed = AggregatorV3Interface(chainLink);

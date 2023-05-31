@@ -1,6 +1,5 @@
 
 
-
 const hre = require("hardhat"); 
 
 const deployGoerli = async () => {
@@ -8,7 +7,7 @@ const deployGoerli = async () => {
   const autoPay = await AutoPay.deploy(
     "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
     "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-    "0xc1C6805B857Bef1f412519C4A842522431aFed39"
+    "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0"
   )
 
   await autoPay.deployed();
@@ -23,7 +22,7 @@ const deployGoerli = async () => {
     constructorArguments: [
       "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
       "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-      "0xc1C6805B857Bef1f412519C4A842522431aFed39"
+      "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0"
     ],
   });
 }
@@ -34,7 +33,7 @@ const deployMumbai = async () => {
   const autoPay = await AutoPay.deploy(
     "0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
     "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-    "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"
+    "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0"
   )
 
   await autoPay.deployed();
@@ -48,10 +47,12 @@ const deployMumbai = async () => {
     constructorArguments: [
       "0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
       "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-      "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"
+      "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0"
     ],
   });
 }
+
+
 
 async function main() {
   const chainId = hre.network.config.chainId;
