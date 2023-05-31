@@ -92,7 +92,7 @@ abstract contract OpsTaskCreator is OpsReady {
         return bytes("");
     }
 
-    function _web3FunctionModuleArg(string memory _web3FunctionHash, bytes calldata _web3FunctionArgsHex)
+    function _web3FunctionModuleArg(string memory _web3FunctionHash, bytes memory _web3FunctionArgsHex)
         internal
         pure
         returns (bytes memory)

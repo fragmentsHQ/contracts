@@ -1,8 +1,7 @@
 
 
 
-
-const hre = require("hardhat");
+const hre = require("hardhat"); 
 
 const deployGoerli = async () => {
   const AutoPay = await hre.ethers.getContractFactory("AutoPay");

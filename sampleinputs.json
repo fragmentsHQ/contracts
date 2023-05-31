@@ -1,0 +1,17 @@
+[
+  {
+    "_fromToken": "0x7ea6eA49B0b0Ae9c5db7907d139D9Cd3439862a1",
+    "_toToken": "0x7ea6eA49B0b0Ae9c5db7907d139D9Cd3439862a1"
+  },
+  {
+    "_toChain": "80001",
+    "_destinationDomain": "9991",
+    "_destinationContract": "0x885eDC2E09286316AF85788C6a76105EE6819646"
+  },
+  {
+    "_cycles": "2",
+    "_startTime": "1685505900",
+    "_interval": "120",
+    "_web3FunctionHash": "QmbN96rTEy8EYxPNVqCUmZgTZzufvCbNhmsVzM2rephoLa"
+  }
+]
