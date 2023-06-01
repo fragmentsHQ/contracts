@@ -439,8 +439,8 @@ contract AutoPay is AutomateTaskCreator {
             _cancelJob(_jobId);
         }
 
-        (uint256 fee, address feeToken) = _getFeeDetails();
-        _transfer(fee, feeToken);
+        // (uint256 fee, address feeToken) = _getFeeDetails();
+        // _transfer(fee, feeToken);
     }
 
     function _transferGas(address payable _to, address _paymentToken, uint256 _amount) external {
