@@ -256,23 +256,24 @@ contract AutoPay is AutomateTaskCreator {
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public view returns (bytes memory) {
-        return (
-            abi.encode(
-                _from,
-                _to,
-                _amount,
-                _fromToken,
-                _toToken,
-                connext.domain(),
-                _connextModule._toChain,
-                _connextModule._destinationDomain,
-                address(this),
-                _connextModule._destinationContract,
-                _gelatoModule._cycles,
-                _gelatoModule._startTime,
-                _gelatoModule._interval
-            )
-        );
+
+
+        return (abi.encode(
+            _from, 
+            _to, 
+            _amount, 
+            _fromToken, 
+            _toToken,
+            block.chainid,
+            _connextModule._toChain, 
+            connext.domain(),
+            _connextModule._destinationDomain, 
+            address(this),
+            _connextModule._destinationContract,
+            _gelatoModule._cycles,
+            _gelatoModule._startTime,
+            _gelatoModule._interval
+        ));
     }
 
     // string public _web3FunctionHash;
