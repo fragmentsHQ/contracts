@@ -30,7 +30,8 @@ contract Conditional is AutomateTaskCreator {
     enum Option {
         TIME,
         PRICE_FEED,
-        CONTRACT_VARIBLES
+        CONTRACT_VARIBLES,
+        GAS_PRICE
     }
 
     event FundsDeposited(
@@ -75,7 +76,6 @@ contract Conditional is AutomateTaskCreator {
         connext = _connext;
         swapRouter = _swapRouter;
         isTransferring = true;
-        price = 100;
         FEES = 10000;
     }
 
@@ -159,10 +159,9 @@ contract Conditional is AutomateTaskCreator {
         uint256 amount,
         uint256 slippage,
         uint256 relayerFeeInTransactingAsset
-    ) public {
-        IERC20 token = IERC20(fromToken);
+    ) internal {
         // This contract approves transfer to Connext
-        token.approve(address(connext), amount);
+        IERC20(fromToken).approve(address(connext), amount);
 
         bytes memory _callData = abi.encode(msg.sender, recipient, toToken);
 
@@ -186,7 +185,7 @@ contract Conditional is AutomateTaskCreator {
         uint32 _origin,
         bytes memory _callData
     )
-        external
+        internal
         onlySource(_originSender, _origin, _origin, _originSender)
         returns (bytes memory)
     {
@@ -211,7 +210,7 @@ contract Conditional is AutomateTaskCreator {
         address _fromToken,
         address _toToken,
         uint256 amountIn
-    ) public returns (uint256 amountOut) {
+    ) internal returns (uint256 amountOut) {
         uint24 poolFee = 500;
         TransferHelper.safeApprove(_fromToken, address(swapRouter), amountIn);
 
@@ -235,7 +234,47 @@ contract Conditional is AutomateTaskCreator {
         // _recipient.transfer(amountOut);
     }
 
-    function _cancelJob(bytes32 _jobId) public {}
+    function _cancelJob(bytes32 _jobId) public {
+        user memory _userInfo = _createdJobs[_jobId];
+        require(_userInfo._user != address(0), "No JOB Found");
+
+        _cancelTask(_userInfo._gelatoTaskID);
+
+        delete _createdJobs[_jobId];
+    }
+
+    // TIME AUTOMATE
+
+    function _getWeb3FunctionHash(
+        address _from,
+        address _to,
+        uint256 _amount,
+        int256 _price,
+        token memory _token,
+        connextModule memory _connextModule,
+        gelatoModule memory _gelatoModule
+    ) public view returns (bytes memory) {
+        return (
+            abi.encode(
+                _from,
+                _to,
+                _amount,
+                _price,
+                _token._fromToken,
+                _token._toToken,
+                _token._tokenA,
+                _token._tokenB,
+                connext.domain(),
+                _connextModule._toChain,
+                _connextModule._destinationDomain,
+                address(this),
+                _connextModule._destinationContract,
+                _gelatoModule._cycles,
+                _gelatoModule._startTime,
+                _gelatoModule._interval
+            )
+        );
+    }
 
     /* 
         _cycles
@@ -247,13 +286,20 @@ contract Conditional is AutomateTaskCreator {
         uint256 _toChain;
         uint32 _destinationDomain;
         address _destinationContract;
-        uint256 _relayerFeeInTransactingAsset;
     }
 
     struct gelatoModule {
         uint256 _cycles;
         uint256 _startTime;
         uint256 _interval;
+        string _web3FunctionHash;
+    }
+
+    struct token {
+        address _fromToken;
+        address _toToken;
+        address _tokenA;
+        address _tokenB;
     }
 
     // PRICE FEED AUTOMATE
@@ -262,77 +308,108 @@ contract Conditional is AutomateTaskCreator {
         address _to,
         uint256 _amount,
         int256 _price,
-        address _fromToken,
-        address _toToken,
+        token memory _token,
         connextModule memory _connextModule,
-        gelatoModule memory _gelatoModule
+        gelatoModule memory _gelatoModule,
+        bytes memory _web3FunctionArgsHex
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
             this._priceFeedAutomateCron.selector,
             _from,
             _to,
             _amount,
-            _price,
-            _fromToken,
-            _toToken,
+            _token,
             _connextModule,
-            _gelatoModule
+            _gelatoModule,
+            0
         );
 
         ModuleData memory moduleData = ModuleData({
-            modules: new Module[](2),
-            args: new bytes[](2)
+            modules: new Module[](3),
+            args: new bytes[](3)
         });
-
         moduleData.modules[0] = Module.TIME;
         moduleData.modules[1] = Module.PROXY;
+        moduleData.modules[2] = Module.WEB3_FUNCTION;
 
-        moduleData.args[0] = _timeModuleArg(_gelatoModule._startTime, 5);
+        moduleData.args[0] = _timeModuleArg(
+            _gelatoModule._startTime,
+            _gelatoModule._interval
+        );
         moduleData.args[1] = _proxyModuleArg();
+        moduleData.args[2] = _web3FunctionModuleArg(
+            _gelatoModule._web3FunctionHash,
+            _web3FunctionArgsHex
+        );
 
-        bytes32 id = _createTask(address(this), execData, moduleData, ETH);
+        bytes32 id = _createTask(
+            address(this),
+            execData,
+            moduleData,
+            address(0)
+        );
+
         return id;
     }
 
-    error CONDITION_NOT_MET(int256, int256);
-    int256 public price;
-
-    function changePrice(int256 _price) public {
-        price = _price;
-    }
+    error Allowance(uint256 allowance, uint256 amount, address token);
 
     function _createPriceFeedAutomate(
         address _to,
         uint256 _amount,
         int256 _price,
-        address _fromToken,
-        address _toToken,
+        token memory _token,
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public {
-        require(
-            IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount,
-            "User must approve amount"
-        );
+        if (
+            IERC20(_token._fromToken).allowance(msg.sender, address(this)) <
+            _amount
+        ) {
+            revert Allowance(
+                IERC20(_token._fromToken).allowance(msg.sender, address(this)),
+                _amount,
+                _token._fromToken
+            );
+        }
 
-        IERC20(_fromToken).transferFrom(msg.sender, address(this), _amount);
+        bytes memory _web3FunctionArgsHex = _getWeb3FunctionHash(
+            msg.sender,
+            _to,
+            _amount,
+            _price,
+            _token,
+            _connextModule,
+            _gelatoModule
+        );
 
         bytes32 _id = _gelatoPriceFeedJobCreator(
             msg.sender,
             _to,
             _amount,
             _price,
-            _fromToken,
-            _toToken,
+            _token,
+            _connextModule,
+            _gelatoModule,
+            _web3FunctionArgsHex
+        );
+
+        bytes32 _jobId = _getAutomateJobId(
+            msg.sender,
+            _to,
+            _amount,
+            _token,
             _connextModule,
             _gelatoModule
         );
+
+        _createdJobs[_jobId] = user(msg.sender, _gelatoModule._cycles, 0, _id);
 
         emit JobCreated(
             address(this),
             msg.sender,
             _id,
-            _fromToken,
+            _token._fromToken,
             _amount,
             _to,
             block.timestamp,
@@ -344,30 +421,24 @@ contract Conditional is AutomateTaskCreator {
         address[] calldata _to,
         uint256[] calldata _amount,
         int256 _price,
-        address _fromToken,
-        address _toToken,
-        connextModule memory _connextModule,
+        token[] calldata _token,
+        connextModule[] calldata _connextModule,
         gelatoModule memory _gelatoModule
     ) external {
-        uint256 totalAmount;
-        for (uint i = 0; i < _to.length; i++) {
-            totalAmount += _amount[i];
-        }
-
-        require(
-            IERC20(_fromToken).allowance(msg.sender, address(this)) >=
-                totalAmount,
-            "User must approve amount"
-        );
-
-        for (uint i = 0; i < _to.length; i++) {
+        for (uint256 i = 0; i < _to.length; i++) {
+            require(
+                IERC20(_token[i]._fromToken).allowance(
+                    msg.sender,
+                    address(this)
+                ) >= _amount[i],
+                "User must approve amount"
+            );
             _createPriceFeedAutomate(
                 _to[i],
                 _amount[i],
                 _price,
-                _fromToken,
-                _toToken,
-                _connextModule,
+                _token[i],
+                _connextModule[i],
                 _gelatoModule
             );
         }
@@ -377,61 +448,69 @@ contract Conditional is AutomateTaskCreator {
         address _from,
         address _to,
         uint256 _amount,
-        address _fromToken,
-        address _toToken,
         int256 _price,
+        token memory _token,
         connextModule memory _connextModule,
-        gelatoModule memory _gelatoModule
+        gelatoModule memory _gelatoModule,
+        uint256 _relayerFeeInTransactingAsset
     ) public payable {
-        // int price = getLatestPrice();
-        if (price != _price) {
-            revert CONDITION_NOT_MET(price, _price);
-        }
-
-        IERC20 token = IERC20(_fromToken);
-        require(_amount > 0, "Amount must be greater than 0");
-        require(_fromToken != _toToken, "From and To tokens must be different");
-        require(_connextModule._toChain > 0, "To chain must be greater than 0");
         require(
-            token.allowance(msg.sender, address(this)) >= _amount,
+            IERC20(_token._fromToken).allowance(msg.sender, address(this)) >=
+                _amount,
             "User must approve amount"
         );
 
         // User sends funds to this contract
-        token.transferFrom(msg.sender, address(this), _amount);
+        IERC20(_token._fromToken).transferFrom(_from, address(this), _amount);
 
         uint256 slippage = 300;
 
         uint256 amountOut = _amount;
 
         if (
-            _fromToken != _toToken && block.chainid == _connextModule._toChain
+            _token._fromToken != _token._toToken &&
+            block.chainid == _connextModule._toChain
         ) {
-            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
-            IERC20(_toToken).transferFrom(address(this), _to, amountOut);
+            amountOut = swapExactInputSingle(
+                _token._fromToken,
+                _token._toToken,
+                _amount
+            );
+            IERC20(_token._toToken).transferFrom(address(this), _to, amountOut);
         } else if (block.chainid != _connextModule._toChain) {
             xTransfer(
                 _to,
                 _connextModule._destinationContract,
                 _connextModule._destinationDomain,
-                _fromToken,
-                _toToken,
+                _token._fromToken,
+                _token._toToken,
                 amountOut,
                 slippage,
-                _connextModule._relayerFeeInTransactingAsset
+                _relayerFeeInTransactingAsset
             );
         } else {
-            IERC20(_fromToken).transferFrom(address(this), _to, _amount);
+            IERC20(_token._fromToken).transferFrom(address(this), _to, _amount);
         }
 
-        (uint256 fee, address feeToken) = _getFeeDetails();
-        _transfer(fee, feeToken);
-    }
+        bytes32 _jobId = _getAutomateJobId(
+            _from,
+            _to,
+            _amount,
+            _token,
+            _connextModule,
+            _gelatoModule
+        );
 
-    function _createContractAutomate(
-        address exec,
-        bytes calldata execData
-    ) external {}
+        user memory userInfo = _createdJobs[_jobId];
+        userInfo._executedCycles++;
+
+        if (userInfo._executedCycles == userInfo._totalCycles) {
+            _cancelJob(_jobId);
+        }
+
+        // (uint256 fee, address feeToken) = _getFeeDetails();
+        // _transfer(fee, feeToken);
+    }
 
     function _transferGas(
         address payable _to,
@@ -477,8 +556,7 @@ contract Conditional is AutomateTaskCreator {
         address _from,
         address _to,
         uint256 _amount,
-        address _fromToken,
-        address _toToken,
+        token memory _token,
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public pure returns (bytes32) {
@@ -491,12 +569,13 @@ contract Conditional is AutomateTaskCreator {
                     _gelatoModule._cycles,
                     _gelatoModule._startTime,
                     _gelatoModule._interval,
-                    _fromToken,
-                    _toToken,
+                    _token._fromToken,
+                    _token._toToken,
+                    _token._tokenA,
+                    _token._tokenB,
                     _connextModule._toChain,
                     _connextModule._destinationContract,
-                    _connextModule._destinationDomain,
-                    _connextModule._relayerFeeInTransactingAsset
+                    _connextModule._destinationDomain
                 )
             );
     }
