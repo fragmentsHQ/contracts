@@ -2,6 +2,9 @@ require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
+require('solidity-docgen');
+// require("@nomiclabs/hardhat-ethers");
+// require("@nomiclabs/hardhat-waffle");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -30,20 +33,21 @@ module.exports = {
       url: process.env.ALCHEMY_MUMBAI_API_URL,
       accounts: [process.env.PRIVATE_KEY]
     },
-    gnosis: {
-      chainId: 100,
-      url: process.env.ALCHEMY_GNOSIS_API_URL,
-      accounts: [process.env.PRIVATE_KEY2]
-    },
-    polygon: {
-      chainId: 137,
-      url: process.env.ALCHEMY_POLYGON_API_URL,
-      accounts: [process.env.PRIVATE_KEY]
-    },
+    // gnosis: {
+    //   chainId: 100,
+    //   url: process.env.ALCHEMY_GNOSIS_API_URL,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // },
+    // polygon: {
+    //   chainId: 137,
+    //   url: process.env.ALCHEMY_POLYGON_API_URL,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // },
   },
   etherscan: {
     apiKey: {
       polygonMumbai: process.env.POLYGONSCAN_API_KEY
     }
-  }
+  },
+  docgen: {}
 };

@@ -39,6 +39,31 @@
       "address": "0x0f6088c415F1569AC4c5C8B4F8C069aDe01E1B01",
       "txHash": "0xb980f2daed56ef847207e05de91f16faae8bb89d4cfee574102f1f04728a37c5",
       "kind": "transparent"
+    },
+    {
+      "address": "0xD13Ba2b5CEac07Eb7895588F3F6bd6Aff231De81",
+      "txHash": "0x3e96444cb856602fce4034814c4bd75c4157c257bca1a9d9c8cd5061a0ed91ad",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x24c411e4534CDEA171A2C72a761ae91bf5F2586b",
+      "txHash": "0x3242604b9029e95af1b799869ac1da05f20fde0bbcaba501d49544c2037f82fc",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xe574D70EFdf2BB76Adf62e647Eac800C5CD6c2eE",
+      "txHash": "0x3cf4da59cb78bfe26f5445be937f481f30e590a041303e18a7d1531bd0255280",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xAbAa78b4a2971a683843cfc9DC99BFdC0A136C7C",
+      "txHash": "0x4145f10653e9c9ff83ea148e37be3ba3d3f2f3cd18c1975affe89c0cd451f2d2",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x39aB5ac729De1F1F4aaB84abBB06E748D0f575f9",
+      "txHash": "0x010681cd66f828e835aa0062286a3c7aee2723161536d6599e5114dba2ff976b",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -1266,6 +1291,518 @@
           "t_uint256": {
             "label": "uint256",
             "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "1a34cbbf219319b49301708ad459747aff8756e107df45f215b5bd96d0a6d373": {
+      "address": "0xFab5238a78d74d78f5AB10898feFf01CA3B32E80",
+      "txHash": "0x9867bb2a66b8e47a24bcea56cb083e635d37d579e5fcb44457916df2f1fe95ad",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "automate",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IAutomate)20998",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:15"
+          },
+          {
+            "label": "dedicatedMsgSender",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:16"
+          },
+          {
+            "label": "_gelato",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:17"
+          },
+          {
+            "label": "fundsOwner",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "AutomateTaskCreator",
+            "src": "contracts\\interfaces\\AutomateTaskCreator.sol:15"
+          },
+          {
+            "label": "FEES",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "Conditional",
+            "src": "contracts\\Conditional.sol:28"
+          },
+          {
+            "label": "connext",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(IConnext)1143",
+            "contract": "Conditional",
+            "src": "contracts\\Conditional.sol:48"
+          },
+          {
+            "label": "swapRouter",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_contract(ISwapRouter)16381",
+            "contract": "Conditional",
+            "src": "contracts\\Conditional.sol:49"
+          },
+          {
+            "label": "_createdJobs",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_bytes32,t_struct(user)17971_storage)",
+            "contract": "Conditional",
+            "src": "contracts\\Conditional.sol:60"
+          },
+          {
+            "label": "userBalance",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "Conditional",
+            "src": "contracts\\Conditional.sol:61"
+          },
+          {
+            "label": "isTransferring",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_bool",
+            "contract": "Conditional",
+            "src": "contracts\\Conditional.sol:82"
+          },
+          {
+            "label": "price",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_int256",
+            "contract": "Conditional",
+            "src": "contracts\\Conditional.sol:298"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IAutomate)20998": {
+            "label": "contract IAutomate",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IConnext)1143": {
+            "label": "contract IConnext",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISwapRouter)16381": {
+            "label": "contract ISwapRouter",
+            "numberOfBytes": "20"
+          },
+          "t_int256": {
+            "label": "int256",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(user)17971_storage)": {
+            "label": "mapping(bytes32 => struct Conditional.user)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(user)17971_storage": {
+            "label": "struct Conditional.user",
+            "members": [
+              {
+                "label": "_user",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_totalCycles",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "_executedCycles",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "_gelatoTaskID",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "3572e9a6c587e9205c2e8a5797720e22491cd683133b4d2684e8e5034d1719b5": {
+      "address": "0x6f7D74643718453643C5d70bb10e5206dFfCCdB5",
+      "txHash": "0x701a19f7a74b4baad49ec50c4daed004213db2ca2056fbe8d173eb2e761dafb3",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "automate",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IAutomate)13426",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:15"
+          },
+          {
+            "label": "dedicatedMsgSender",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:16"
+          },
+          {
+            "label": "_gelato",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:17"
+          },
+          {
+            "label": "fundsOwner",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "AutomateTaskCreator",
+            "src": "contracts\\interfaces\\AutomateTaskCreator.sol:15"
+          },
+          {
+            "label": "FEES",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "AutoPay",
+            "src": "contracts\\AutoPay.sol:28"
+          },
+          {
+            "label": "connext",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(IConnext)1143",
+            "contract": "AutoPay",
+            "src": "contracts\\AutoPay.sol:49"
+          },
+          {
+            "label": "swapRouter",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_contract(ISwapRouter)11488",
+            "contract": "AutoPay",
+            "src": "contracts\\AutoPay.sol:50"
+          },
+          {
+            "label": "_createdJobs",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_bytes32,t_struct(user)11733_storage)",
+            "contract": "AutoPay",
+            "src": "contracts\\AutoPay.sol:61"
+          },
+          {
+            "label": "userBalance",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "AutoPay",
+            "src": "contracts\\AutoPay.sol:62"
+          },
+          {
+            "label": "isTransferring",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_bool",
+            "contract": "AutoPay",
+            "src": "contracts\\AutoPay.sol:78"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IAutomate)13426": {
+            "label": "contract IAutomate",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IConnext)1143": {
+            "label": "contract IConnext",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISwapRouter)11488": {
+            "label": "contract ISwapRouter",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(user)11733_storage)": {
+            "label": "mapping(bytes32 => struct AutoPay.user)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(user)11733_storage": {
+            "label": "struct AutoPay.user",
+            "members": [
+              {
+                "label": "_user",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_totalCycles",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "_executedCycles",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "_gelatoTaskID",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "d6539461c0d606f5dd769552b41a9e5f7d663cf0d85a99416bd03d8b758d1e53": {
+      "address": "0x5ac6ee1D20B81D9b811369e73a18F3247ea2a62F",
+      "txHash": "0xb6e3702fbf5a349e2a17347e56eedd16cd8ade5bc5ff27647a2ed5c0321dcbd7",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "automate",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IAutomate)17825",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:15"
+          },
+          {
+            "label": "dedicatedMsgSender",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:16"
+          },
+          {
+            "label": "_gelato",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "AutomateReady",
+            "src": "contracts\\interfaces\\AutomateReady.sol:17"
+          },
+          {
+            "label": "fundsOwner",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "AutomateTaskCreator",
+            "src": "contracts\\interfaces\\AutomateTaskCreator.sol:15"
+          },
+          {
+            "label": "connext",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(IConnext)1143",
+            "contract": "XStreamPool",
+            "src": "contracts\\XStreamPool.sol:79"
+          },
+          {
+            "label": "host",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(ISuperfluid)14151",
+            "contract": "XStreamPool",
+            "src": "contracts\\XStreamPool.sol:80"
+          },
+          {
+            "label": "cfa",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_contract(IConstantFlowAgreementV1)12250",
+            "contract": "XStreamPool",
+            "src": "contracts\\XStreamPool.sol:81"
+          },
+          {
+            "label": "superToken",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_contract(ISuperToken)13499",
+            "contract": "XStreamPool",
+            "src": "contracts\\XStreamPool.sol:82"
+          },
+          {
+            "label": "erc20Token",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_contract(IERC20)10702",
+            "contract": "XStreamPool",
+            "src": "contracts\\XStreamPool.sol:83"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IAutomate)17825": {
+            "label": "contract IAutomate",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IConnext)1143": {
+            "label": "contract IConnext",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IConstantFlowAgreementV1)12250": {
+            "label": "contract IConstantFlowAgreementV1",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IERC20)10702": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISuperToken)13499": {
+            "label": "contract ISuperToken",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISuperfluid)14151": {
+            "label": "contract ISuperfluid",
+            "numberOfBytes": "20"
           },
           "t_uint8": {
             "label": "uint8",

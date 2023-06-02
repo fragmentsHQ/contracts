@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.17;
+pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -11,13 +11,11 @@ import "./Types.sol";
  * - Have call restrictions for functions to be automated.
  */
 // solhint-disable private-vars-leading-underscore
-abstract contract OpsReady is Initializable {
-    IOps public ops;
+abstract contract AutomateReady is Initializable {
+    IAutomate public automate;
     address public dedicatedMsgSender;
     address private _gelato;
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address private constant OPS_PROXY_FACTORY =
-        0xC815dB16D4be6ddf2685C201937905aBf338F5D7;
 
     /**
      * @dev
@@ -33,30 +31,29 @@ abstract contract OpsReady is Initializable {
      * @dev
      * _taskCreator is the address which will create tasks for this contract.
      */
-    // constructor(address _ops, address _taskCreator) {
-    //     ops = IOps(_ops);
-    //     _gelato = IOps(_ops).gelato();
-    //     (dedicatedMsgSender, ) = IOpsProxyFactory(OPS_PROXY_FACTORY).getProxyOf(
-    //         _taskCreator
-    //     );
-    // }
-
     function __initialize(
-        address _ops,
+        address _automate,
         address _taskCreator
     ) public onlyInitializing {
-        ops = IOps(_ops);
-        _gelato = IOps(_ops).gelato();
-        (dedicatedMsgSender, ) = IOpsProxyFactory(OPS_PROXY_FACTORY).getProxyOf(
-            _taskCreator
+        automate = IAutomate(_automate);
+        _gelato = IAutomate(_automate).gelato();
+
+        address proxyModuleAddress = IAutomate(_automate).taskModuleAddresses(
+            Module.PROXY
         );
+
+        address opsProxyFactoryAddress = IProxyModule(proxyModuleAddress)
+            .opsProxyFactory();
+
+        (dedicatedMsgSender, ) = IOpsProxyFactory(opsProxyFactoryAddress)
+            .getProxyOf(_taskCreator);
     }
 
     /**
      * @dev
      * Transfers fee to gelato for synchronous fee payments.
      *
-     * _fee & _feeToken should be queried from IOps.getFeeDetails()
+     * _fee & _feeToken should be queried from IAutomate.getFeeDetails()
      */
     function _transfer(uint256 _fee, address _feeToken) internal {
         if (_feeToken == ETH) {
@@ -72,6 +69,6 @@ abstract contract OpsReady is Initializable {
         view
         returns (uint256 fee, address feeToken)
     {
-        (fee, feeToken) = ops.getFeeDetails();
+        (fee, feeToken) = automate.getFeeDetails();
     }
 }

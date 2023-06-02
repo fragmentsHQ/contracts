@@ -5,9 +5,15 @@
   "repository": "https://github.com/fragmentsHQ/contracts",
   "author": "Priyanshu Kumar Panda <priyanshupanda.ctp@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "deploy:xstream": "npx hardhat run scripts/deployXstream.js",
+    "deploy:conditional": "npx hardhat run scripts/deployConditional.js",
+    "deploy:autopay": "npx hardhat run scripts/deployAutopay.js"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "2.0.1",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-etherscan": "^3.0.0",
     "@openzeppelin/hardhat-upgrades": "^1.26.0",
@@ -15,19 +21,22 @@
     "@typechain/hardhat": "^6.1.2",
     "@types/chai": "^4.2.0",
     "@types/mocha": ">=9.1.0",
-    "chai": "^4.2.0",
-    "hardhat": "^2.14.0",
-    "hardhat-gas-reporter": "^1.0.8",
-    "solidity-coverage": "^0.8.1",
-    "typechain": "^8.1.0"
+    "chai": "4.2.0",
+    "hardhat": "2.12.6",
+    "hardhat-gas-reporter": "1.0.8",
+    "solidity-coverage": "0.8.1",
+    "typechain": "8.1.0"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.6.1",
-    "@connext/nxtp-contracts": "^0.2.1-rc.16",
-    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@connext/smart-contracts": "^2.0.0-alpha.1",
     "@openzeppelin/contracts": "^4.8.3",
     "@openzeppelin/contracts-upgradeable": "^4.8.3",
+    "@superfluid-finance/ethereum-contracts": "^1.6.0",
     "@uniswap/v3-periphery": "^1.4.3",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "ethers": "5",
+    "fast-json-stable-stringify": "^2.1.0",
+    "solidity-docgen": "^0.6.0-beta.35"
   }
 }

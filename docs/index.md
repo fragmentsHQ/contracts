@@ -2,6 +2,24 @@
 
 ## AutoPay
 
+### receive
+
+```solidity
+receive() external payable
+```
+
+### fallback
+
+```solidity
+fallback() external payable
+```
+
+### FEES
+
+```solidity
+uint256 FEES
+```
+
 ### Option
 
 ```solidity
@@ -23,6 +41,24 @@ event FundsDeposited(address sender, address token, uint256 amount)
 
 ```solidity
 event FundsWithdrawn(address receiver, address initiator, address token, uint256 amount)
+```
+
+### connext
+
+```solidity
+contract IConnext connext
+```
+
+### swapRouter
+
+```solidity
+contract ISwapRouter swapRouter
+```
+
+### WETH
+
+```solidity
+address WETH
 ```
 
 ### user
@@ -48,6 +84,29 @@ mapping(bytes32 => struct AutoPay.user) _createdJobs
 mapping(address => mapping(address => uint256)) userBalance
 ```
 
+### constructor
+
+```solidity
+constructor(contract IConnext _connext, contract ISwapRouter _swapRouter, address payable _ops) public
+```
+
+### isTransferring
+
+```solidity
+bool isTransferring
+```
+
+### isTransfer
+
+```solidity
+modifier isTransfer()
+```
+
+### onlySource
+
+```solidity
+modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source)
+```
 
 ### JobCreated
 
@@ -77,6 +136,24 @@ event XReceiveData(address originSender, uint32 origin, address asset, uint256 a
 
 ```solidity
 function checkBalance() public view returns (uint256)
+```
+
+### xTransfer
+
+```solidity
+function xTransfer(address recipient, address destinationContract, uint32 destinationDomain, address fromToken, address toToken, uint256 amount, uint256 slippage, uint256 relayerFeeInTransactingAsset) internal
+```
+
+### xReceive
+
+```solidity
+function xReceive(bytes32 _transferId, uint256 _amount, address _asset, address _originSender, uint32 _origin, bytes _callData) internal returns (bytes)
+```
+
+### swapExactInputSingle
+
+```solidity
+function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn) internal returns (uint256 amountOut)
 ```
 
 ### _cancelJob
@@ -157,6 +234,17 @@ function _createMultipleTimeAutomate(address[] _to, uint256[] _amount, struct Au
 function _timeAutomateCron(address _from, address _to, uint256 _amount, address _fromToken, address _toToken, struct AutoPay.connextModule _connextModule, struct AutoPay.gelatoModule _gelatoModule, uint256 _relayerFeeInTransactingAsset) external
 ```
 
+### _transferGas
+
+```solidity
+function _transferGas(address payable _to, address _paymentToken, uint256 _amount) external
+```
+
+### depositGas
+
+```solidity
+function depositGas(address payable _to, address _paymentToken, uint256 _amount) external payable
+```
 
 ### getBalanceOfToken
 
@@ -172,6 +260,185 @@ function _getAutomateJobId(address _from, address _to, uint256 _amount, address 
 
 ## Conditional
 
+### receive
+
+```solidity
+receive() external payable
+```
+
+### fallback
+
+```solidity
+fallback() external payable
+```
+
+### FEES
+
+```solidity
+uint256 FEES
+```
+
+### Option
+
+```solidity
+enum Option {
+  TIME,
+  PRICE_FEED,
+  CONTRACT_VARIBLES
+}
+```
+
+### FundsDeposited
+
+```solidity
+event FundsDeposited(address sender, address token, uint256 amount)
+```
+
+### FundsWithdrawn
+
+```solidity
+event FundsWithdrawn(address receiver, address initiator, address token, uint256 amount)
+```
+
+### connext
+
+```solidity
+contract IConnext connext
+```
+
+### swapRouter
+
+```solidity
+contract ISwapRouter swapRouter
+```
+
+### WETH
+
+```solidity
+address WETH
+```
+
+### user
+
+```solidity
+struct user {
+  address _user;
+  uint256 _totalCycles;
+  uint256 _executedCycles;
+  bytes32 _gelatoTaskID;
+}
+```
+
+### _createdJobs
+
+```solidity
+mapping(bytes32 => struct Conditional.user) _createdJobs
+```
+
+### userBalance
+
+```solidity
+mapping(address => mapping(address => uint256)) userBalance
+```
+
+### constructor
+
+```solidity
+constructor(contract IConnext _connext, contract ISwapRouter _swapRouter, address payable _ops) public
+```
+
+### isTransferring
+
+```solidity
+bool isTransferring
+```
+
+### isTransfer
+
+```solidity
+modifier isTransfer()
+```
+
+### onlySource
+
+```solidity
+modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source)
+```
+
+### JobCreated
+
+```solidity
+event JobCreated(address taskCreator, address execAddress, bytes32 taskId, address token, uint256 amount, address receiver, uint256 inteval, enum Conditional.Option option)
+```
+
+### JobSuccess
+
+```solidity
+event JobSuccess(uint256 txFee, address feeToken, address execAddress, bytes execData, bytes32 taskId, bool callSuccess)
+```
+
+### XTransferData
+
+```solidity
+event XTransferData(address sender, address receiver, address selectedToken, int96 flowRate, uint256 amount, uint256 streamStatus, uint256 startTime, uint256 bufferFee, uint256 networkFee, uint32 destinationDomain)
+```
+
+### XReceiveData
+
+```solidity
+event XReceiveData(address originSender, uint32 origin, address asset, uint256 amount, bytes32 transferId, uint256 receiveTimestamp, address senderAccount, address receiverAccount, int256 flowRate)
+```
+
+### checkBalance
+
+```solidity
+function checkBalance() public view returns (uint256)
+```
+
+### xTransfer
+
+```solidity
+function xTransfer(address recipient, address destinationContract, uint32 destinationDomain, address fromToken, address toToken, uint256 amount, uint256 slippage, uint256 relayerFeeInTransactingAsset) public
+```
+
+### xReceive
+
+```solidity
+function xReceive(bytes32 _transferId, uint256 _amount, address _asset, address _originSender, uint32 _origin, bytes _callData) external returns (bytes)
+```
+
+### swapExactInputSingle
+
+```solidity
+function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn) public returns (uint256 amountOut)
+```
+
+### _cancelJob
+
+```solidity
+function _cancelJob(bytes32 _jobId) public
+```
+
+### connextModule
+
+```solidity
+struct connextModule {
+  uint256 _toChain;
+  uint32 _destinationDomain;
+  address _destinationContract;
+  uint256 _relayerFeeInTransactingAsset;
+}
+```
+
+### gelatoModule
+
+```solidity
+struct gelatoModule {
+  uint256 _cycles;
+  uint256 _startTime;
+  uint256 _interval;
+}
+```
 
 ### _gelatoPriceFeedJobCreator
 
@@ -245,7 +512,31 @@ function getBalanceOfToken(address _address) public view returns (uint256)
 function _getAutomateJobId(address _from, address _to, uint256 _amount, address _fromToken, address _toToken, struct Conditional.connextModule _connextModule, struct Conditional.gelatoModule _gelatoModule) public pure returns (bytes32)
 ```
 
+## Treasury
 
+## Unauthorized
+
+```solidity
+error Unauthorized()
+```
+
+## InvalidAgreement
+
+```solidity
+error InvalidAgreement()
+```
+
+## InvalidToken
+
+```solidity
+error InvalidToken()
+```
+
+## StreamAlreadyActive
+
+```solidity
+error StreamAlreadyActive()
+```
 
 ## XStreamPool
 

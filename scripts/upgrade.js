@@ -2,16 +2,35 @@
 const { ethers, upgrades } = require('hardhat');
 const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
 
-async function main () {
+
+async function upgradeConditional() {
+    //put the current proxy address for respective network here
+    const currentProxyAddress = '0x...'
+
+    const ConditionalV2 = await ethers.getContractFactory('ConditionalV2');
   
+    console.log('Upgrading Conditional...');
+    await upgrades.upgradeProxy(currentProxyAddress, ConditionalV2);
+    console.log('Conditional upgraded');
+  
+    const currentImplAddress = await getImplementationAddress(hre.network.provider, currentProxyAddress);
+    
+    console.log('New Implementation Contract Address:', currentImplAddress);
+    
+    await hre.run("verify:verify", {
+      address: currentImplAddress,
+    });
+}
+
+async function upgradeAutoPay() {
   //put the current proxy address for respective network here
-  const currentProxyAddress = '0x0f6088c415F1569AC4c5C8B4F8C069aDe01E1B01'
+  const currentProxyAddress = '0x0...'
 
-  const FragmentsV2 = await ethers.getContractFactory('FragmentsV2');
+  const AutopayV2 = await ethers.getContractFactory('AutopayV2');
 
-  console.log('Upgrading Fragments...');
-  await upgrades.upgradeProxy(currentProxyAddress, FragmentsV2);
-  console.log('Fragments upgraded');
+  console.log('Upgrading Autopay...');
+  await upgrades.upgradeProxy(currentProxyAddress, AutopayV2);
+  console.log('Autopay upgraded');
 
   const currentImplAddress = await getImplementationAddress(hre.network.provider, currentProxyAddress);
   
@@ -20,6 +39,32 @@ async function main () {
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
+}
+
+async function upgradeXStream() {
+  //put the current proxy address for respective network here
+  const currentProxyAddress = '0x0...'
+
+  const XStreamV2 = await ethers.getContractFactory('XStreamV2');
+
+  console.log('Upgrading XStream...');
+  await upgrades.upgradeProxy(currentProxyAddress, XStreamV2);
+  console.log('XStream upgraded');
+
+  const currentImplAddress = await getImplementationAddress(hre.network.provider, currentProxyAddress);
+  
+  console.log('New Implementation Contract Address:', currentImplAddress);
+  
+  await hre.run("verify:verify", {
+    address: currentImplAddress,
+  });
+}
+
+
+async function main () {
+  upgradeConditional()
+  upgradeAutoPay()
+  upgradeXStream()
 }
 
 main();

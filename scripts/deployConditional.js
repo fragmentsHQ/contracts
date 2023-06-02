@@ -8,20 +8,20 @@ const hre = require("hardhat");
 const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
 
 const deployGoerli = async () => {
-  const Fragments = await hre.ethers.getContractFactory("Fragments");
-  const fragments = await hre.upgrades.deployProxy(Fragments, [
+  const Conditional = await hre.ethers.getContractFactory("Conditional");
+  const conditional = await hre.upgrades.deployProxy(Conditional, [
   "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
   "0xE592427A0AEce92De3Edee1F18E0157C05861564",
   "0xc1C6805B857Bef1f412519C4A842522431aFed39"]);
 
-  await fragments.deployed();
+  await conditional.deployed();
   
 
   console.log(
-    `Deployed to ${fragments.address}`
+    `Deployed to ${conditional.address}`
   );
 
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, fragments.address);
+  const currentImplAddress = await getImplementationAddress(hre.network.provider, conditional.address);
   
   console.log('Implementation Contract Address:', currentImplAddress);
   
@@ -31,20 +31,21 @@ const deployGoerli = async () => {
 
 }
 
+
 const deployMumbai = async () => {
-  const Fragments = await hre.ethers.getContractFactory("Fragments");
-  const fragments = await hre.upgrades.deployProxy(Fragments, [
+  const Conditional = await hre.ethers.getContractFactory("Conditional");
+  const conditional = await hre.upgrades.deployProxy(Conditional, [
   "0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a",
   "0xE592427A0AEce92De3Edee1F18E0157C05861564",
   "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F"]);
 
-  await fragments.deployed();
+  await conditional.deployed();
 
   console.log(
-    `Deployed to ${fragments.address}`
+    `Deployed to ${conditional.address}`
   );
 
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, fragments.address);
+  const currentImplAddress = await getImplementationAddress(hre.network.provider, conditional.address);
   
   console.log('Implementation Contract Address:', currentImplAddress);
   
