@@ -58,19 +58,6 @@ contract AutoPay is AutomateTaskCreator {
         // priceFeed = AggregatorV3Interface(chainLink);
     }
 
-    // function getLatestPrice() public view returns (int256) {
-    //     (uint80 roundID, int256 price, uint256 startedAt, uint256 timeStamp, uint80 answeredInRound) =
-    //         priceFeed.latestRoundData();
-    //     return price;
-    // }
-
-    bool public isTransferring = false;
-
-    modifier isTransfer() {
-        require(isTransferring == false, "already transferring!");
-        _;
-    }
-
     modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source) {
         require(
             _origin == _originDomain && _originSender == _source && msg.sender == address(connext),
@@ -325,27 +312,6 @@ contract AutoPay is AutomateTaskCreator {
         address _fromToken;
         address _toToken;
     }
-
-    // function _createTimeAutomate(
-    //     address _to,
-    //     uint256 _amount,
-    //     address _fromToken,
-    //     address _toToken,
-    //     connextModule memory _connextModule,
-    //     gelatoModule memory _gelatoModule
-    // ) public {
-    //     require(IERC20(_fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
-
-    //     bytes32 _id =
-    //         _gelatoTimeJobCreator(msg.sender, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule);
-
-    //     bytes32 _jobId =
-    //         _getAutomateJobId(msg.sender, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule);
-
-    //     _createdJobs[_jobId] = user(msg.sender, _gelatoModule._cycles, 0, _id);
-
-    //     emit JobCreated(address(this), msg.sender, _id, _fromToken, _amount, _to, _gelatoModule._interval, Option.TIME);
-    // }
 
     error Allowance(uint256 allowance, uint256 amount, address token);
 

@@ -12,9 +12,10 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
-      }
-    }
+        runs: 200,
+      },
+      viaIR: true
+    },
   },
   networks: {
     hardhat: {
@@ -46,8 +47,8 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
-    // apiKey: process.env.POLYGONSCAN_API_KEY
+    // apiKey: process.env.ETHERSCAN_API_KEY
+    apiKey: process.env.POLYGONSCAN_API_KEY
   },
   polygonscan: {
     apiKey: process.env.POLYGONSCAN_API_KEY
