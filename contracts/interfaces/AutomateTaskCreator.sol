@@ -12,13 +12,16 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 abstract contract AutomateTaskCreator is AutomateReady {
     using SafeERC20 for IERC20;
 
-    address public immutable fundsOwner;
+    address public fundsOwner;
     IGelato1Balance public constant gelato1Balance =
         IGelato1Balance(0x7506C12a824d73D9b08564d5Afc22c949434755e);
 
-    constructor(address _automate, address _fundsOwner)
-        AutomateReady(_automate, address(this))
-    {
+    function ATC__initialize(
+        address _automate,
+        address _fundsOwner
+    ) public onlyInitializing {
+        AutomateReady.__initialize(_automate, address(this));
+
         fundsOwner = _fundsOwner;
     }
 
@@ -70,11 +73,10 @@ abstract contract AutomateTaskCreator is AutomateReady {
         return abi.encode(_resolverAddress, _resolverData);
     }
 
-    function _timeModuleArg(uint256 _startTime, uint256 _interval)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function _timeModuleArg(
+        uint256 _startTime,
+        uint256 _interval
+    ) internal pure returns (bytes memory) {
         return abi.encode(uint128(_startTime), uint128(_interval));
     }
 

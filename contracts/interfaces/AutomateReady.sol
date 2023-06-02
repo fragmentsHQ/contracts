@@ -2,6 +2,7 @@
 pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./Types.sol";
 
 /**
@@ -10,10 +11,10 @@ import "./Types.sol";
  * - Have call restrictions for functions to be automated.
  */
 // solhint-disable private-vars-leading-underscore
-abstract contract AutomateReady {
-    IAutomate public immutable automate;
-    address public immutable dedicatedMsgSender;
-    address private immutable _gelato;
+abstract contract AutomateReady is Initializable {
+    IAutomate public automate;
+    address public dedicatedMsgSender;
+    address private _gelato;
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     /**
@@ -30,7 +31,10 @@ abstract contract AutomateReady {
      * @dev
      * _taskCreator is the address which will create tasks for this contract.
      */
-    constructor(address _automate, address _taskCreator) {
+    function __initialize(
+        address _automate,
+        address _taskCreator
+    ) public onlyInitializing {
         automate = IAutomate(_automate);
         _gelato = IAutomate(_automate).gelato();
 

@@ -25,7 +25,7 @@ contract AutoPay is AutomateTaskCreator {
 
     fallback() external payable {}
 
-    uint256 public FEES = 10000;
+    uint256 public FEES;
 
     enum Option {
         TIME,
@@ -34,11 +34,20 @@ contract AutoPay is AutomateTaskCreator {
         GAS_PRICE
     }
 
-    event FundsDeposited(address indexed sender, address indexed token, uint256 indexed amount);
-    event FundsWithdrawn(address indexed receiver, address indexed initiator, address indexed token, uint256 amount);
+    event FundsDeposited(
+        address indexed sender,
+        address indexed token,
+        uint256 indexed amount
+    );
+    event FundsWithdrawn(
+        address indexed receiver,
+        address indexed initiator,
+        address indexed token,
+        uint256 amount
+    );
 
-    IConnext public immutable connext;
-    ISwapRouter public immutable swapRouter;
+    IConnext public connext;
+    ISwapRouter public swapRouter;
 
     address public constant WETH = 0xFD2AB41e083c75085807c4A65C0A14FDD93d55A9;
 
@@ -52,15 +61,42 @@ contract AutoPay is AutomateTaskCreator {
     mapping(bytes32 => user) public _createdJobs;
     mapping(address => mapping(address => uint256)) public userBalance;
 
-    constructor(IConnext _connext, ISwapRouter _swapRouter, address payable _ops) AutomateTaskCreator(_ops, msg.sender) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
+        IConnext _connext,
+        ISwapRouter _swapRouter,
+        address payable _ops
+    ) public initializer {
+        AutomateTaskCreator.ATC__initialize(_ops, msg.sender);
+
         connext = _connext;
         swapRouter = _swapRouter;
+        isTransferring = false;
+        FEES = 10000;
         // priceFeed = AggregatorV3Interface(chainLink);
     }
 
-    modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source) {
+    bool public isTransferring;
+
+    modifier isTransfer() {
+        require(isTransferring == false, "already transferring!");
+        _;
+    }
+
+    modifier onlySource(
+        address _originSender,
+        uint32 _origin,
+        uint32 _originDomain,
+        address _source
+    ) {
         require(
-            _origin == _originDomain && _originSender == _source && msg.sender == address(connext),
+            _origin == _originDomain &&
+                _originSender == _source &&
+                msg.sender == address(connext),
             "Expected original caller to be source contract on origin domain and this to be called by Connext"
         );
         _;
@@ -150,12 +186,19 @@ contract AutoPay is AutomateTaskCreator {
         address _originSender,
         uint32 _origin,
         bytes memory _callData
-    ) internal onlySource(_originSender, _origin, _origin, _originSender) returns (bytes memory) {
+    )
+        internal
+        onlySource(_originSender, _origin, _origin, _originSender)
+        returns (bytes memory)
+    {
         address _sender;
         address _recipient;
         address _toToken;
 
-        (_sender, _recipient, _toToken) = abi.decode(_callData, (address, address, address));
+        (_sender, _recipient, _toToken) = abi.decode(
+            _callData,
+            (address, address, address)
+        );
 
         uint256 amountOut = _amount;
         if (_asset != _toToken) {
@@ -165,23 +208,25 @@ contract AutoPay is AutomateTaskCreator {
         IERC20(_asset).transfer(_recipient, amountOut);
     }
 
-    function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
-        internal
-        returns (uint256 amountOut)
-    {
+    function swapExactInputSingle(
+        address _fromToken,
+        address _toToken,
+        uint256 amountIn
+    ) internal returns (uint256 amountOut) {
         uint24 poolFee = 500;
         TransferHelper.safeApprove(_fromToken, address(swapRouter), amountIn);
 
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: _fromToken,
-            tokenOut: _toToken,
-            fee: poolFee,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-        });
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: _fromToken,
+                tokenOut: _toToken,
+                fee: poolFee,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
 
         amountOut = swapRouter.exactInputSingle(params);
         return amountOut;
@@ -211,6 +256,7 @@ contract AutoPay is AutomateTaskCreator {
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public view returns (bytes memory) {
+
 
         return (abi.encode(
             _from, 
@@ -247,19 +293,40 @@ contract AutoPay is AutomateTaskCreator {
         bytes memory _web3FunctionArgsHex
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
-            this._timeAutomateCron.selector, _from, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule
+            this._timeAutomateCron.selector,
+            _from,
+            _to,
+            _amount,
+            _fromToken,
+            _toToken,
+            _connextModule,
+            _gelatoModule
         );
 
-        ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
+        ModuleData memory moduleData = ModuleData({
+            modules: new Module[](3),
+            args: new bytes[](3)
+        });
         moduleData.modules[0] = Module.TIME;
         moduleData.modules[1] = Module.PROXY;
         moduleData.modules[2] = Module.WEB3_FUNCTION;
 
-        moduleData.args[0] = _timeModuleArg(_gelatoModule._startTime, _gelatoModule._interval);
+        moduleData.args[0] = _timeModuleArg(
+            _gelatoModule._startTime,
+            _gelatoModule._interval
+        );
         moduleData.args[1] = _proxyModuleArg();
-        moduleData.args[2] = _web3FunctionModuleArg(_gelatoModule._web3FunctionHash, _web3FunctionArgsHex);
+        moduleData.args[2] = _web3FunctionModuleArg(
+            _gelatoModule._web3FunctionHash,
+            _web3FunctionArgsHex
+        );
 
-        bytes32 id = _createTask(address(this), execData, moduleData, address(0));
+        bytes32 id = _createTask(
+            address(this),
+            execData,
+            moduleData,
+            address(0)
+        );
 
         return id;
     }
@@ -274,16 +341,29 @@ contract AutoPay is AutomateTaskCreator {
         gelatoModule memory _gelatoModule
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
-            this._timeAutomateCron.selector, _from, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule
+            this._timeAutomateCron.selector,
+            _from,
+            _to,
+            _amount,
+            _fromToken,
+            _toToken,
+            _connextModule,
+            _gelatoModule
         );
 
         ModuleData memory moduleData;
 
-        moduleData = ModuleData({modules: new Module[](2), args: new bytes[](2)});
+        moduleData = ModuleData({
+            modules: new Module[](2),
+            args: new bytes[](2)
+        });
         moduleData.modules[0] = Module.TIME;
         moduleData.modules[1] = Module.PROXY;
 
-        moduleData.args[0] = _timeModuleArg(_gelatoModule._startTime, _gelatoModule._interval);
+        moduleData.args[0] = _timeModuleArg(
+            _gelatoModule._startTime,
+            _gelatoModule._interval
+        );
         moduleData.args[1] = _proxyModuleArg();
 
         bytes32 id = _createTask(address(this), execData, moduleData, ETH);
@@ -323,8 +403,15 @@ contract AutoPay is AutomateTaskCreator {
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public {
-        if(IERC20(_token._fromToken).allowance(msg.sender, address(this)) < _amount){
-            revert Allowance(IERC20(_token._fromToken).allowance(msg.sender, address(this)), _amount, _token._fromToken);
+        if (
+            IERC20(_token._fromToken).allowance(msg.sender, address(this)) <
+            _amount
+        ) {
+            revert Allowance(
+                IERC20(_token._fromToken).allowance(msg.sender, address(this)),
+                _amount,
+                _token._fromToken
+            );
         }
 
         bytes memory _web3FunctionArgsHex = _getWeb3FunctionHash(
@@ -335,30 +422,65 @@ contract AutoPay is AutomateTaskCreator {
             _token._toToken,
             _connextModule,
             _gelatoModule
-          );
+        );
 
-        bytes32 _id =
-            _gelatoTimeJobCreator(msg.sender, _to, _amount, _token._fromToken, _token._toToken, _connextModule, _gelatoModule, _web3FunctionArgsHex);
+        bytes32 _id = _gelatoTimeJobCreator(
+            msg.sender,
+            _to,
+            _amount,
+            _token._fromToken,
+            _token._toToken,
+            _connextModule,
+            _gelatoModule,
+            _web3FunctionArgsHex
+        );
 
-        bytes32 _jobId =
-            _getAutomateJobId(msg.sender, _to, _amount, _token._fromToken, _token._toToken, _connextModule, _gelatoModule);
+        bytes32 _jobId = _getAutomateJobId(
+            msg.sender,
+            _to,
+            _amount,
+            _token._fromToken,
+            _token._toToken,
+            _connextModule,
+            _gelatoModule
+        );
 
         _createdJobs[_jobId] = user(msg.sender, _gelatoModule._cycles, 0, _id);
 
-        emit JobCreated(address(this), msg.sender, _id, _token._fromToken, _amount, _to, _gelatoModule._interval, Option.TIME);
+        emit JobCreated(
+            address(this),
+            msg.sender,
+            _id,
+            _token._fromToken,
+            _amount,
+            _to,
+            _gelatoModule._interval,
+            Option.TIME
+        );
     }
 
     function _createMultipleTimeAutomate(
         address[] calldata _to,
         uint256[] calldata _amount,
-        token [] calldata _token,
+        token[] calldata _token,
         connextModule[] calldata _connextModule,
         gelatoModule memory _gelatoModule
     ) external {
-        
         for (uint256 i = 0; i < _to.length; i++) {
-            require(IERC20(_token[i]._fromToken).allowance(msg.sender, address(this)) >= _amount[i], "User must approve amount");
-            _createTimeAutomate(_to[i], _amount[i], _token[i], _connextModule[i], _gelatoModule);
+            require(
+                IERC20(_token[i]._fromToken).allowance(
+                    msg.sender,
+                    address(this)
+                ) >= _amount[i],
+                "User must approve amount"
+            );
+            _createTimeAutomate(
+                _to[i],
+                _amount[i],
+                _token[i],
+                _connextModule[i],
+                _gelatoModule
+            );
         }
     }
 
@@ -372,14 +494,19 @@ contract AutoPay is AutomateTaskCreator {
         gelatoModule memory _gelatoModule,
         uint256 _relayerFeeInTransactingAsset
     ) external {
-        require(IERC20(_fromToken).allowance(_from, address(this)) >= _amount, "User must approve amount");
+        require(
+            IERC20(_fromToken).allowance(_from, address(this)) >= _amount,
+            "User must approve amount"
+        );
 
         IERC20(_fromToken).transferFrom(_from, address(this), _amount);
         uint256 slippage = 300;
 
         uint256 amountOut = _amount;
 
-        if (block.chainid == _connextModule._toChain && _fromToken != _toToken) {
+        if (
+            block.chainid == _connextModule._toChain && _fromToken != _toToken
+        ) {
             amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
             IERC20(_toToken).transferFrom(address(this), _to, amountOut);
         } else if (block.chainid != _connextModule._toChain) {
@@ -397,7 +524,15 @@ contract AutoPay is AutomateTaskCreator {
             IERC20(_fromToken).transferFrom(address(this), _to, _amount);
         }
 
-        bytes32 _jobId = _getAutomateJobId(_from, _to, _amount, _fromToken, _toToken, _connextModule, _gelatoModule);
+        bytes32 _jobId = _getAutomateJobId(
+            _from,
+            _to,
+            _amount,
+            _fromToken,
+            _toToken,
+            _connextModule,
+            _gelatoModule
+        );
 
         user memory userInfo = _createdJobs[_jobId];
         userInfo._executedCycles++;
@@ -410,28 +545,38 @@ contract AutoPay is AutomateTaskCreator {
         // _transfer(fee, feeToken);
     }
 
-    function _transferGas(address payable _to, address _paymentToken, uint256 _amount) external {
+    function _transferGas(
+        address payable _to,
+        address _paymentToken,
+        uint256 _amount
+    ) external {
         (uint256 fee, address feeToken) = _getFeeDetails();
 
         payable(address(this)).transfer(fee);
 
         if (_paymentToken == ETH) {
-            (bool success,) = _to.call{value: _amount}("");
+            (bool success, ) = _to.call{value: _amount}("");
             require(success, "_transfer: ETH transfer failed");
         } else {
             SafeERC20.safeTransfer(IERC20(_paymentToken), _to, _amount);
         }
     }
 
-    function depositGas(address payable _to, address _paymentToken, uint256 _amount) external payable {
+    function depositGas(
+        address payable _to,
+        address _paymentToken,
+        uint256 _amount
+    ) external payable {
         if (_paymentToken == ETH) {
-            (bool success,) = _to.call{value: _amount}("");
+            (bool success, ) = _to.call{value: _amount}("");
             require(success, "_transfer: ETH transfer failed");
         } else {
             SafeERC20.safeTransfer(IERC20(_paymentToken), _to, _amount);
         }
 
-        userBalance[_to][_paymentToken] = userBalance[_to][_paymentToken] + _amount;
+        userBalance[_to][_paymentToken] =
+            userBalance[_to][_paymentToken] +
+            _amount;
 
         emit FundsDeposited(_to, _paymentToken, _amount);
     }
@@ -449,20 +594,21 @@ contract AutoPay is AutomateTaskCreator {
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public pure returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                _from,
-                _to,
-                _amount,
-                _gelatoModule._cycles,
-                _gelatoModule._startTime,
-                _gelatoModule._interval,
-                _fromToken,
-                _toToken,
-                _connextModule._toChain,
-                _connextModule._destinationContract,
-                _connextModule._destinationDomain
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    _from,
+                    _to,
+                    _amount,
+                    _gelatoModule._cycles,
+                    _gelatoModule._startTime,
+                    _gelatoModule._interval,
+                    _fromToken,
+                    _toToken,
+                    _connextModule._toChain,
+                    _connextModule._destinationContract,
+                    _connextModule._destinationDomain
+                )
+            );
     }
 }
