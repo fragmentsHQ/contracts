@@ -6,12 +6,13 @@
   {
     "_toChain": "80001",
     "_destinationDomain": "9991",
-    "_destinationContract": "0xb0853E24843fA174E6cA3F5Acd4c2689Ea39FFef"
+    "_destinationContract": "0x7f464d4f3D46552F936cb68c21a0A2dB3E32919F"
   },
   {
     "_cycles": "2",
     "_startTime": "1685559300",
     "_interval": "120",
-    "_web3FunctionHash": "QmbN96rTEy8EYxPNVqCUmZgTZzufvCbNhmsVzM2rephoLa"
+    "_web3FunctionHash": "Qmbfmo98TLNKjCKgvJxwuSfuV99BPinpPazLupVmcLPzat"
   }
 ]
+["80001","9991","0x7f464d4f3D46552F936cb68c21a0A2dB3E32919F","2","1685559300","120","Qmbfmo98TLNKjCKgvJxwuSfuV99BPinpPazLupVmcLPzat"]

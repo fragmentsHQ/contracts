@@ -8,7 +8,8 @@
   "scripts": {
     "deploy:xstream": "npx hardhat run scripts/deployXstream.js",
     "deploy:conditional": "npx hardhat run scripts/deployConditional.js",
-    "deploy:autopay": "npx hardhat run scripts/deployAutopay.js"
+    "deploy:autopay": "npx hardhat run scripts/deployAutopay.js",
+    "deploy:treasury": "npx hardhat run scripts/deployTreasury.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",

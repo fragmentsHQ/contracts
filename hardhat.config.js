@@ -14,9 +14,6 @@ module.exports = {
       optimizer: {
         enabled: true,
         runs: 200,
-        // details: {
-        //   yul: false,
-        // }
       },
       viaIR: true
     },
@@ -37,6 +34,12 @@ module.exports = {
       url: process.env.ALCHEMY_MUMBAI_API_URL,
       accounts: [process.env.PRIVATE_KEY]
     },
+    zkEVM : {
+      chainId: 1442,
+      url: "https://rpc.public.zkevm-test.net",
+      accounts: [process.env.PRIVATE_KEY]
+
+    },
     // gnosis: {
     //   chainId: 100,
     //   url: process.env.ALCHEMY_GNOSIS_API_URL,
@@ -50,6 +53,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
+      goerli: process.env.ETHERSCAN_API_KEY,
       polygonMumbai: process.env.POLYGONSCAN_API_KEY
     }
   },

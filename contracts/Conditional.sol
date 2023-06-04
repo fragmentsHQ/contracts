@@ -17,6 +17,7 @@ import "hardhat/console.sol";
 
 import "./interfaces/AutomateTaskCreator.sol";
 import "./interfaces/WETH9_.sol";
+import "./interfaces/Treasury.sol";
 
 contract Conditional is AutomateTaskCreator {
     using SafeERC20 for IERC20;
@@ -34,20 +35,12 @@ contract Conditional is AutomateTaskCreator {
         GAS_PRICE
     }
 
-    event FundsDeposited(
-        address indexed sender,
-        address indexed token,
-        uint256 indexed amount
-    );
-    event FundsWithdrawn(
-        address indexed receiver,
-        address indexed initiator,
-        address indexed token,
-        uint256 amount
-    );
+    event FundsDeposited(address indexed sender, address indexed token, uint256 indexed amount);
+    event FundsWithdrawn(address indexed receiver, address indexed initiator, address indexed token, uint256 amount);
 
     IConnext public connext;
     ISwapRouter public swapRouter;
+    ITreasury public treasury;
 
     address public constant WETH = 0xFD2AB41e083c75085807c4A65C0A14FDD93d55A9;
 
@@ -66,36 +59,23 @@ contract Conditional is AutomateTaskCreator {
         _disableInitializers();
     }
 
-    function initialize(
-        IConnext _connext,
-        ISwapRouter _swapRouter,
-        address payable _ops
-    ) public initializer {
+    function initialize(IConnext _connext, ISwapRouter _swapRouter, address payable _ops) public initializer {
         AutomateTaskCreator.ATC__initialize(_ops, msg.sender);
 
         connext = _connext;
         swapRouter = _swapRouter;
-        isTransferring = true;
         FEES = 10000;
+
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+        // priceFeed = AggregatorV3Interface(chainLink);
     }
 
-    bool public isTransferring;
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    modifier isTransfer() {
-        require(isTransferring == false, "already transferring!");
-        _;
-    }
-
-    modifier onlySource(
-        address _originSender,
-        uint32 _origin,
-        uint32 _originDomain,
-        address _source
-    ) {
+    modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source) {
         require(
-            _origin == _originDomain &&
-                _originSender == _source &&
-                msg.sender == address(connext),
+            _origin == _originDomain && _originSender == _source && msg.sender == address(connext),
             "Expected original caller to be source contract on origin domain and this to be called by Connext"
         );
         _;
@@ -150,6 +130,10 @@ contract Conditional is AutomateTaskCreator {
         return address(this).balance;
     }
 
+    function updateTreasury(address _treasury) external onlyOwner {
+        treasury = ITreasury(_treasury);
+    }
+
     function xTransfer(
         address recipient,
         address destinationContract,
@@ -184,19 +168,12 @@ contract Conditional is AutomateTaskCreator {
         address _originSender,
         uint32 _origin,
         bytes memory _callData
-    )
-        internal
-        onlySource(_originSender, _origin, _origin, _originSender)
-        returns (bytes memory)
-    {
+    ) internal onlySource(_originSender, _origin, _origin, _originSender) returns (bytes memory) {
         address _sender;
         address _recipient;
         address _toToken;
 
-        (_sender, _recipient, _toToken) = abi.decode(
-            _callData,
-            (address, address, address)
-        );
+        (_sender, _recipient, _toToken) = abi.decode(_callData, (address, address, address));
 
         uint256 amountOut = _amount;
         if (_asset != _toToken) {
@@ -206,25 +183,23 @@ contract Conditional is AutomateTaskCreator {
         IERC20(_asset).transfer(_recipient, amountOut);
     }
 
-    function swapExactInputSingle(
-        address _fromToken,
-        address _toToken,
-        uint256 amountIn
-    ) internal returns (uint256 amountOut) {
+    function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
+        internal
+        returns (uint256 amountOut)
+    {
         uint24 poolFee = 500;
         TransferHelper.safeApprove(_fromToken, address(swapRouter), amountIn);
 
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-            .ExactInputSingleParams({
-                tokenIn: _fromToken,
-                tokenOut: _toToken,
-                fee: poolFee,
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: amountIn,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            });
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: _fromToken,
+            tokenOut: _toToken,
+            fee: poolFee,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        });
 
         amountOut = swapRouter.exactInputSingle(params);
         return amountOut;
@@ -315,40 +290,19 @@ contract Conditional is AutomateTaskCreator {
         bytes memory _web3FunctionArgsHex
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
-            this._priceFeedAutomateCron.selector,
-            _from,
-            _to,
-            _amount,
-            _token,
-            _connextModule,
-            _gelatoModule,
-            0
+            this._priceFeedAutomateCron.selector, _from, _to, _amount, _price, _token, _connextModule, _gelatoModule, 0
         );
 
-        ModuleData memory moduleData = ModuleData({
-            modules: new Module[](3),
-            args: new bytes[](3)
-        });
+        ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
         moduleData.modules[0] = Module.TIME;
         moduleData.modules[1] = Module.PROXY;
         moduleData.modules[2] = Module.WEB3_FUNCTION;
 
-        moduleData.args[0] = _timeModuleArg(
-            _gelatoModule._startTime,
-            _gelatoModule._interval
-        );
+        moduleData.args[0] = _timeModuleArg(_gelatoModule._startTime, _gelatoModule._interval);
         moduleData.args[1] = _proxyModuleArg();
-        moduleData.args[2] = _web3FunctionModuleArg(
-            _gelatoModule._web3FunctionHash,
-            _web3FunctionArgsHex
-        );
+        moduleData.args[2] = _web3FunctionModuleArg(_gelatoModule._web3FunctionHash, _web3FunctionArgsHex);
 
-        bytes32 id = _createTask(
-            address(this),
-            execData,
-            moduleData,
-            address(0)
-        );
+        bytes32 id = _createTask(address(this), execData, moduleData, address(0));
 
         return id;
     }
@@ -363,59 +317,24 @@ contract Conditional is AutomateTaskCreator {
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public {
-        if (
-            IERC20(_token._fromToken).allowance(msg.sender, address(this)) <
-            _amount
-        ) {
-            revert Allowance(
-                IERC20(_token._fromToken).allowance(msg.sender, address(this)),
-                _amount,
-                _token._fromToken
-            );
+        if (IERC20(_token._fromToken).allowance(msg.sender, address(this)) < _amount) {
+            revert Allowance(IERC20(_token._fromToken).allowance(msg.sender, address(this)), _amount, _token._fromToken);
         }
 
-        bytes memory _web3FunctionArgsHex = _getWeb3FunctionHash(
-            msg.sender,
-            _to,
-            _amount,
-            _price,
-            _token,
-            _connextModule,
-            _gelatoModule
-        );
+        bytes memory _web3FunctionArgsHex =
+            _getWeb3FunctionHash(msg.sender, _to, _amount, _price, _token, _connextModule, _gelatoModule);
 
         bytes32 _id = _gelatoPriceFeedJobCreator(
-            msg.sender,
-            _to,
-            _amount,
-            _price,
-            _token,
-            _connextModule,
-            _gelatoModule,
-            _web3FunctionArgsHex
+            msg.sender, _to, _amount, _price, _token, _connextModule, _gelatoModule, _web3FunctionArgsHex
         );
 
-        bytes32 _jobId = _getAutomateJobId(
-            msg.sender,
-            _to,
-            _amount,
-            _token,
-            _connextModule,
-            _gelatoModule
-        );
+        bytes32 _jobId = _getAutomateJobId(msg.sender, _to, _amount, _token, _connextModule, _gelatoModule);
 
         _createdJobs[_jobId] = user(msg.sender, _gelatoModule._cycles, 0, _id);
 
         emit JobCreated(
-            address(this),
-            msg.sender,
-            _id,
-            _token._fromToken,
-            _amount,
-            _to,
-            block.timestamp,
-            Option.PRICE_FEED
-        );
+            address(this), msg.sender, _id, _token._fromToken, _amount, _to, block.timestamp, Option.PRICE_FEED
+            );
     }
 
     function _createMultiplePriceFeedAutomate(
@@ -428,20 +347,10 @@ contract Conditional is AutomateTaskCreator {
     ) external {
         for (uint256 i = 0; i < _to.length; i++) {
             require(
-                IERC20(_token[i]._fromToken).allowance(
-                    msg.sender,
-                    address(this)
-                ) >= _amount[i],
+                IERC20(_token[i]._fromToken).allowance(msg.sender, address(this)) >= _amount[i],
                 "User must approve amount"
             );
-            _createPriceFeedAutomate(
-                _to[i],
-                _amount[i],
-                _price,
-                _token[i],
-                _connextModule[i],
-                _gelatoModule
-            );
+            _createPriceFeedAutomate(_to[i], _amount[i], _price, _token[i], _connextModule[i], _gelatoModule);
         }
     }
 
@@ -455,11 +364,7 @@ contract Conditional is AutomateTaskCreator {
         gelatoModule memory _gelatoModule,
         uint256 _relayerFeeInTransactingAsset
     ) public payable {
-        require(
-            IERC20(_token._fromToken).allowance(msg.sender, address(this)) >=
-                _amount,
-            "User must approve amount"
-        );
+        require(IERC20(_token._fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
 
         // User sends funds to this contract
         IERC20(_token._fromToken).transferFrom(_from, address(this), _amount);
@@ -468,15 +373,8 @@ contract Conditional is AutomateTaskCreator {
 
         uint256 amountOut = _amount;
 
-        if (
-            _token._fromToken != _token._toToken &&
-            block.chainid == _connextModule._toChain
-        ) {
-            amountOut = swapExactInputSingle(
-                _token._fromToken,
-                _token._toToken,
-                _amount
-            );
+        if (_token._fromToken != _token._toToken && block.chainid == _connextModule._toChain) {
+            amountOut = swapExactInputSingle(_token._fromToken, _token._toToken, _amount);
             IERC20(_token._toToken).transferFrom(address(this), _to, amountOut);
         } else if (block.chainid != _connextModule._toChain) {
             xTransfer(
@@ -493,14 +391,7 @@ contract Conditional is AutomateTaskCreator {
             IERC20(_token._fromToken).transferFrom(address(this), _to, _amount);
         }
 
-        bytes32 _jobId = _getAutomateJobId(
-            _from,
-            _to,
-            _amount,
-            _token,
-            _connextModule,
-            _gelatoModule
-        );
+        bytes32 _jobId = _getAutomateJobId(_from, _to, _amount, _token, _connextModule, _gelatoModule);
 
         user memory userInfo = _createdJobs[_jobId];
         userInfo._executedCycles++;
@@ -509,44 +400,9 @@ contract Conditional is AutomateTaskCreator {
             _cancelJob(_jobId);
         }
 
-        // (uint256 fee, address feeToken) = _getFeeDetails();
-        // _transfer(fee, feeToken);
-    }
-
-    function _transferGas(
-        address payable _to,
-        address _paymentToken,
-        uint256 _amount
-    ) external {
         (uint256 fee, address feeToken) = _getFeeDetails();
-
-        payable(address(this)).transfer(fee);
-
-        if (_paymentToken == ETH) {
-            (bool success, ) = _to.call{value: _amount}("");
-            require(success, "_transfer: ETH transfer failed");
-        } else {
-            SafeERC20.safeTransfer(IERC20(_paymentToken), _to, _amount);
-        }
-    }
-
-    function depositGas(
-        address payable _to,
-        address _paymentToken,
-        uint256 _amount
-    ) external payable {
-        if (_paymentToken == ETH) {
-            (bool success, ) = _to.call{value: _amount}("");
-            require(success, "_transfer: ETH transfer failed");
-        } else {
-            SafeERC20.safeTransfer(IERC20(_paymentToken), _to, _amount);
-        }
-
-        userBalance[_to][_paymentToken] =
-            userBalance[_to][_paymentToken] +
-            _amount;
-
-        emit FundsDeposited(_to, _paymentToken, _amount);
+        treasury.useFunds(userInfo._user, fee, feeToken);
+        // _transfer(fee, feeToken);
     }
 
     function getBalanceOfToken(address _address) public view returns (uint256) {
@@ -561,23 +417,22 @@ contract Conditional is AutomateTaskCreator {
         connextModule memory _connextModule,
         gelatoModule memory _gelatoModule
     ) public pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    _from,
-                    _to,
-                    _amount,
-                    _gelatoModule._cycles,
-                    _gelatoModule._startTime,
-                    _gelatoModule._interval,
-                    _token._fromToken,
-                    _token._toToken,
-                    _token._tokenA,
-                    _token._tokenB,
-                    _connextModule._toChain,
-                    _connextModule._destinationContract,
-                    _connextModule._destinationDomain
-                )
-            );
+        return keccak256(
+            abi.encode(
+                _from,
+                _to,
+                _amount,
+                _gelatoModule._cycles,
+                _gelatoModule._startTime,
+                _gelatoModule._interval,
+                _token._fromToken,
+                _token._toToken,
+                _token._tokenA,
+                _token._tokenB,
+                _connextModule._toChain,
+                _connextModule._destinationContract,
+                _connextModule._destinationDomain
+            )
+        );
     }
 }

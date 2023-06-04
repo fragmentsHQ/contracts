@@ -3,6 +3,8 @@ pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Types.sol";
 
 /**
@@ -11,7 +13,7 @@ import "./Types.sol";
  * - Have call restrictions for functions to be automated.
  */
 // solhint-disable private-vars-leading-underscore
-abstract contract AutomateReady is Initializable {
+abstract contract AutomateReady is Initializable,OwnableUpgradeable, UUPSUpgradeable {
     IAutomate public automate;
     address public dedicatedMsgSender;
     address private _gelato;

@@ -10,19 +10,22 @@ import {
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {
-    ReentrancyGuard
-} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+    ReentrancyGuardUpgradeable
+} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-// import {_transfer, ETH} from "../functions/FUtils.sol";
 
-contract Treasury is Ownable, ReentrancyGuard {
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {_transfer, ETH} from "./helpers/Utils.sol";
+
+contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
     mapping(address => mapping(address => uint256)) public userTokenBalance;
     mapping(address => EnumerableSet.AddressSet) internal _tokenCredits;
     EnumerableSet.AddressSet internal _whitelistedServices;
-    address payable public immutable gelato;
 
     event FundsDeposited(
         address indexed sender,
@@ -44,9 +47,23 @@ contract Treasury is Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(address payable _gelato) {
-        gelato = _gelato;
+      /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
+
+    function initialize() public initializer {
+
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
+    }
+
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        onlyOwner
+        override
+    {}
 
     // solhint-disable max-line-length
     /// @notice Function to deposit Funds which will be used to execute transactions on various services
@@ -59,15 +76,15 @@ contract Treasury is Ownable, ReentrancyGuard {
         uint256 _amount
     ) external payable {
         uint256 depositAmount;
-        // if (_token == ETH) {
-        //     depositAmount = msg.value;
-        // } else {
-        //     IERC20 token = IERC20(_token);
-        //     uint256 preBalance = token.balanceOf(address(this));
-        //     token.safeTransferFrom(msg.sender, address(this), _amount);
-        //     uint256 postBalance = token.balanceOf(address(this));
-        //     depositAmount = postBalance - preBalance;
-        // }
+        if (_token == ETH) {
+            depositAmount = msg.value;
+        } else {
+            IERC20 token = IERC20(_token);
+            uint256 preBalance = token.balanceOf(address(this));
+            token.safeTransferFrom(msg.sender, address(this), _amount);
+            uint256 postBalance = token.balanceOf(address(this));
+            depositAmount = postBalance - preBalance;
+        }
 
         userTokenBalance[_receiver][_token] =
             userTokenBalance[_receiver][_token] +
@@ -117,7 +134,7 @@ contract Treasury is Ownable, ReentrancyGuard {
         if (userTokenBalance[_user][_token] == 0)
             _tokenCredits[_user].remove(_token);
 
-        // _transfer(gelato, _token, _amount);
+        _transfer(payable(msg.sender), _token, _amount);
     }
 
     // Governance functions
