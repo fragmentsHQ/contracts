@@ -430,8 +430,8 @@ contract AutoPay is AutomateTaskCreator {
             _cancelJob(_jobId);
         }
 
-        (uint256 fee, address feeToken) = _getFeeDetails();
-        treasury.useFunds(userInfo._user, fee, feeToken);
+        // (uint256 fee, address feeToken) = _getFeeDetails();
+        // treasury.useFunds(userInfo._user, fee, feeToken);
     }
 
     function getBalanceOfToken(address _address) public view returns (uint256) {

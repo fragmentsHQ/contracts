@@ -33,9 +33,7 @@ const deployGoerli = async () => {
 const deployzkEVM = async () => {
   const AutoPay = await hre.ethers.getContractFactory("AutoPay");
   const autoPay = await hre.upgrades.deployProxy(AutoPay, [
-    "0x20b4789065DE09c71848b9A4FcAABB2c10006FA2",
-    "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-    "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0"],
+    "0x20b4789065DE09c71848b9A4FcAABB2c10006FA2"],
     {
       kind: 'uups'
     }

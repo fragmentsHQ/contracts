@@ -5,7 +5,7 @@ const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
 
 async function upgradeConditional() {
   //put the current proxy address for respective network here
-  const currentProxyAddress = '0x...'
+  const currentProxyAddress = '0xDc7EcF12CFf43ea2d40Ad475b6BB0C5Fe6dD368A'
 
   const ConditionalV2 = await ethers.getContractFactory('Conditional');
 
