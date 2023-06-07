@@ -64,8 +64,8 @@ async function upgradeXStream() {
 
 
 async function main() {
-  // upgradeConditional()
-  upgradeAutoPay()
+  upgradeConditional()
+  // upgradeAutoPay()
   // upgradeXStream()
 }
 
