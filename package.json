@@ -10,7 +10,8 @@
     "deploy:conditional": "npx hardhat run scripts/deployConditional.js",
     "deploy:autopay": "npx hardhat run scripts/deployAutopay.js",
     "deploy:treasury": "npx hardhat run scripts/deployTreasury.js",
-    "upgrade:autopay" : "npx hardhat run scripts/upgradeAutopay.js"
+    "upgrade:autopay" : "npx hardhat run scripts/upgradeAutopay.js",
+    "upgrade:conditional" : "npx hardhat run scripts/upgradeConditional.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",

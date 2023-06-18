@@ -4,23 +4,31 @@ pragma abicoder v2;
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import {IConnext} from "@connext/smart-contracts/contracts/core/connext/interfaces/IConnext.sol";
 import {IXReceiver} from "@connext/smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import "hardhat/console.sol";
 
 import "./interfaces/AutomateTaskCreator.sol";
 import "./interfaces/WETH9_.sol";
 import "./interfaces/Treasury.sol";
+import {ISwapper} from "./interfaces/ISwapper.sol";
+
+
+
 
 contract Conditional is AutomateTaskCreator {
     using SafeERC20 for IERC20;
+    using Strings for address;
+    using Address for address;
 
     receive() external payable {}
 
@@ -82,13 +90,20 @@ contract Conditional is AutomateTaskCreator {
     }
 
     event JobCreated(
-        address indexed taskCreator,
-        address indexed execAddress,
-        bytes32 indexed taskId,
-        address token,
-        uint256 amount,
-        address receiver,
-        uint256 inteval,
+        address indexed _taskCreator,
+        bytes32 indexed _jobId,
+        bytes32 _gelatoTaskId,
+        address indexed _to,
+        uint256 _amount,
+        uint256 _price,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 _destinationDomain,
+        address _destinationContract,
+        uint256 _cycles,
+        uint256 _startTime,
+        uint256 _interval,
         Option option
     );
 
@@ -104,13 +119,12 @@ contract Conditional is AutomateTaskCreator {
     event XTransferData(
         address indexed sender,
         address indexed receiver,
-        address indexed selectedToken,
-        int96 flowRate,
+        address indexed fromToken,
+        address toToken,
+        address destinationContract,
         uint256 amount,
-        uint256 streamStatus,
         uint256 startTime,
-        uint256 bufferFee,
-        uint256 networkFee,
+        uint256 relayerFeeInTransactingAsset,
         uint32 destinationDomain
     );
 
@@ -122,8 +136,7 @@ contract Conditional is AutomateTaskCreator {
         bytes32 transferId,
         uint256 receiveTimestamp,
         address senderAccount,
-        address receiverAccount,
-        int256 flowRate
+        address receiverAccount
     );
 
     function checkBalance() public view returns (uint256) {
@@ -135,6 +148,7 @@ contract Conditional is AutomateTaskCreator {
     }
 
     function xTransfer(
+        address from,
         address recipient,
         address destinationContract,
         uint32 destinationDomain,
@@ -143,11 +157,11 @@ contract Conditional is AutomateTaskCreator {
         uint256 amount,
         uint256 slippage,
         uint256 relayerFeeInTransactingAsset
-    ) internal {
+    ) public {
         // This contract approves transfer to Connext
         IERC20(fromToken).approve(address(connext), amount);
 
-        bytes memory _callData = abi.encode(msg.sender, recipient, toToken);
+        bytes memory _callData = abi.encode(from, recipient, toToken);
 
         connext.xcall(
             destinationDomain, // _destination: Domain ID of the destination chain
@@ -159,6 +173,18 @@ contract Conditional is AutomateTaskCreator {
             _callData, // _callData: empty because we're only sending funds
             relayerFeeInTransactingAsset
         );
+
+        emit XTransferData(
+            from,
+            recipient,
+            fromToken,
+            toToken,
+            destinationContract,
+            amount,
+            block.timestamp,
+            relayerFeeInTransactingAsset,
+            destinationDomain
+            );
     }
 
     function xReceive(
@@ -181,6 +207,21 @@ contract Conditional is AutomateTaskCreator {
         }
 
         IERC20(_asset).transfer(_recipient, amountOut);
+
+        emit XReceiveData(_originSender, _origin, _asset, _amount, _transferId, block.timestamp, _sender, _recipient);
+    }
+
+    /**
+     * @notice Swap an exact amount of tokens for another token. Uses a direct call to the swapper to allow
+     * easy swaps on the source side where the amount does not need to be changed.
+     * @param _swapper Address of the swapper to use.
+     * @param swapData Data to pass to the swapper. This data is encoded for a particular swap router.
+     */
+    function directSwapperCall(address _swapper, bytes calldata swapData) external payable returns (uint256 amountOut) {
+        bytes memory ret = _swapper.functionCallWithValue(swapData, msg.value, "!directSwapperCallFailed");
+        amountOut = abi.decode(ret, (uint256));
+
+        return amountOut;
     }
 
     function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
@@ -203,10 +244,6 @@ contract Conditional is AutomateTaskCreator {
 
         amountOut = swapRouter.exactInputSingle(params);
         return amountOut;
-
-        // address payable recipient  = payable(0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7);
-        // WETH9_(WETH).withdraw(amountOut);
-        // _recipient.transfer(amountOut);
     }
 
     function _cancelJob(bytes32 _jobId) public {
@@ -218,36 +255,47 @@ contract Conditional is AutomateTaskCreator {
         delete _createdJobs[_jobId];
     }
 
-    // TIME AUTOMATE
+    // CONDITIONAL TIME AUTOMATE
 
     function _getWeb3FunctionHash(
         address _from,
         address _to,
         uint256 _amount,
-        int256 _price,
-        token memory _token,
-        connextModule memory _connextModule,
-        gelatoModule memory _gelatoModule
+        uint256 _price,
+        address _fromToken,
+        address _toToken,
+        address _tokenA,
+        address _tokenB,
+        uint256 _toChain,
+        uint32 _destinationDomain,
+        address _destinationContract,
+        uint256 _cycles,
+        uint256 _startTime,
+        uint256 _interval
     ) public view returns (bytes memory) {
+        string memory __amount = Strings.toString(_amount);
+        string memory __price = Strings.toString(_price);
+
+
         return (
             abi.encode(
-                _from,
-                _to,
-                _amount,
-                _price,
-                _token._fromToken,
-                _token._toToken,
-                _token._tokenA,
-                _token._tokenB,
+                _from.toHexString(),
+                _to.toHexString(),
+                __amount,
+                __price,
+                _fromToken.toHexString(),
+                _toToken.toHexString(),
+                _tokenA.toHexString(),
+                _tokenB.toHexString(),
                 block.chainid,
-                _connextModule._toChain,
+                _toChain,
                 connext.domain(),
-                _connextModule._destinationDomain,
-                address(this),
-                _connextModule._destinationContract,
-                _gelatoModule._cycles,
-                _gelatoModule._startTime,
-                _gelatoModule._interval
+                _destinationDomain,
+                address(this).toHexString(),
+                _destinationContract.toHexString(),
+                _cycles,
+                _startTime,
+                _interval
             )
         );
     }
@@ -258,39 +306,40 @@ contract Conditional is AutomateTaskCreator {
         any number = number of cycles
     */
 
-    struct connextModule {
-        uint256 _toChain;
-        uint32 _destinationDomain;
-        address _destinationContract;
-    }
-
-    struct gelatoModule {
-        uint256 _cycles;
-        uint256 _startTime;
-        uint256 _interval;
-        string _web3FunctionHash;
-    }
-
-    struct token {
-        address _fromToken;
-        address _toToken;
-        address _tokenA;
-        address _tokenB;
-    }
-
     // PRICE FEED AUTOMATE
     function _gelatoPriceFeedJobCreator(
         address _from,
         address _to,
         uint256 _amount,
-        int256 _price,
-        token memory _token,
-        connextModule memory _connextModule,
-        gelatoModule memory _gelatoModule,
+        uint256 _price,
+        address _fromToken,
+        address _toToken,
+        address _tokenA,
+        address _tokenB,
+        uint256 _toChain,
+        uint32 _destinationDomain,
+        address _destinationContract,
+        uint256 _cycles,
+        uint256 _startTime,
+        uint256 _interval,
+        string memory _web3FunctionHash,
         bytes memory _web3FunctionArgsHex
     ) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(
-            this._priceFeedAutomateCron.selector, _from, _to, _amount, _price, _token, _connextModule, _gelatoModule, 0
+            this._priceFeedAutomateCron.selector,
+            _from,
+            _to,
+            _amount,
+            _price,
+            _fromToken,
+            _toToken,
+            _toChain,
+            _destinationDomain,
+            _destinationContract,
+            _cycles,
+            _startTime,
+            _interval,
+            0
         );
 
         ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
@@ -298,11 +347,11 @@ contract Conditional is AutomateTaskCreator {
         moduleData.modules[1] = Module.PROXY;
         moduleData.modules[2] = Module.WEB3_FUNCTION;
 
-        moduleData.args[0] = _timeModuleArg(_gelatoModule._startTime, _gelatoModule._interval);
+        moduleData.args[0] = _timeModuleArg(_startTime, _interval);
         moduleData.args[1] = _proxyModuleArg();
-        moduleData.args[2] = _web3FunctionModuleArg(_gelatoModule._web3FunctionHash, _web3FunctionArgsHex);
+        moduleData.args[2] = _web3FunctionModuleArg(_web3FunctionHash, _web3FunctionArgsHex);
 
-        bytes32 id = _createTask(address(this), execData, moduleData, address(0));
+        bytes32 id = _createTask(address(this), execData, moduleData, ETH);
 
         return id;
     }
@@ -312,97 +361,213 @@ contract Conditional is AutomateTaskCreator {
     function _createPriceFeedAutomate(
         address _to,
         uint256 _amount,
-        int256 _price,
-        token memory _token,
-        connextModule memory _connextModule,
-        gelatoModule memory _gelatoModule
+        uint256 _price,
+        address _fromToken,
+        address _toToken,
+        address _tokenA,
+        address _tokenB,
+        uint256 _toChain,
+        uint32 _destinationDomain,
+        address _destinationContract,
+        uint256 _cycles,
+        uint256 _startTime,
+        uint256 _interval,
+        string memory _web3FunctionHash
     ) public {
-        if (IERC20(_token._fromToken).allowance(msg.sender, address(this)) < _amount) {
-            revert Allowance(IERC20(_token._fromToken).allowance(msg.sender, address(this)), _amount, _token._fromToken);
+        if (IERC20(_fromToken).allowance(msg.sender, address(this)) < _amount) {
+            revert Allowance(IERC20(_fromToken).allowance(msg.sender, address(this)), _amount, _fromToken);
         }
 
-        bytes memory _web3FunctionArgsHex =
-            _getWeb3FunctionHash(msg.sender, _to, _amount, _price, _token, _connextModule, _gelatoModule);
-
-        bytes32 _id = _gelatoPriceFeedJobCreator(
-            msg.sender, _to, _amount, _price, _token, _connextModule, _gelatoModule, _web3FunctionArgsHex
+        bytes memory _web3FunctionArgsHex = _getWeb3FunctionHash(
+            msg.sender,
+            _to,
+            _amount,
+            _price,
+            _fromToken,
+            _toToken,
+            _tokenA,
+            _tokenB,
+            _toChain,
+            _destinationDomain,
+            _destinationContract,
+            _cycles,
+            _startTime,
+            _interval
         );
 
-        bytes32 _jobId = _getAutomateJobId(msg.sender, _to, _amount, _token, _connextModule, _gelatoModule);
+        bytes32 _id = _gelatoPriceFeedJobCreator(
+            msg.sender,
+            _to,
+            _amount,
+            _price,
+            _fromToken,
+            _toToken,
+            _tokenA,
+            _tokenB,
+            _toChain,
+            _destinationDomain,
+            _destinationContract,
+            _cycles,
+            _startTime,
+            _interval,
+            _web3FunctionHash,
+            _web3FunctionArgsHex
+        );
 
-        _createdJobs[_jobId] = user(msg.sender, _gelatoModule._cycles, 0, _id);
+        bytes32 _jobId = _getAutomateJobId(
+            msg.sender,
+            _to,
+            _amount,
+            _price,
+            _fromToken,
+            _toToken,
+            _toChain,
+            _destinationDomain,
+            _destinationContract,
+            _cycles,
+            _startTime,
+            _interval
+        );
+
+        _createdJobs[_jobId] = user(msg.sender, _cycles, 0, _id);
 
         emit JobCreated(
-            address(this), msg.sender, _id, _token._fromToken, _amount, _to, block.timestamp, Option.PRICE_FEED
+            msg.sender,
+            _jobId,
+            _id,
+            _to,
+            _amount,
+            _price,
+            _fromToken,
+            _toToken,
+            _toChain,
+            _destinationDomain,
+            _destinationContract,
+            _cycles,
+            _startTime,
+            _interval,
+            Option.TIME
             );
     }
 
     function _createMultiplePriceFeedAutomate(
         address[] calldata _to,
         uint256[] calldata _amount,
-        int256 _price,
-        token[] calldata _token,
-        connextModule[] calldata _connextModule,
-        gelatoModule memory _gelatoModule
+        uint256[] calldata _price,
+        address[] calldata _fromToken,
+        address[] calldata _toToken,
+        address[] calldata _tokenA,
+        address[] calldata _tokenB,
+        uint256[] calldata _toChain,
+        uint32[] calldata _destinationDomain,
+        address[] calldata _destinationContract,
+        uint256[] calldata _cycles,
+        uint256[] calldata _startTime,
+        uint256[] calldata _interval,
+        string memory _web3FunctionHash
     ) external {
         for (uint256 i = 0; i < _to.length; i++) {
-            require(
-                IERC20(_token[i]._fromToken).allowance(msg.sender, address(this)) >= _amount[i],
-                "User must approve amount"
+            if (IERC20(_fromToken[i]).allowance(msg.sender, address(this)) < _amount[i]) {
+                revert Allowance(IERC20(_fromToken[i]).allowance(msg.sender, address(this)), _amount[i], _fromToken[i]);
+            }
+            _createPriceFeedAutomate(
+                 _to[i],
+                 _amount[i],
+                 _price[i],
+                 _fromToken[i],
+                 _toToken[i],
+                 _tokenA[i],
+                 _tokenB[i],
+                 _toChain[i],
+                 _destinationDomain[i],
+                 _destinationContract[i],
+                 _cycles[i],
+                 _startTime[i],
+                 _interval[i],
+                _web3FunctionHash
             );
-            _createPriceFeedAutomate(_to[i], _amount[i], _price, _token[i], _connextModule[i], _gelatoModule);
         }
     }
+
+    error AmountLessThanRelayer(uint256 _amount, uint256 _relayerFeeInTransactingAsset);
 
     function _priceFeedAutomateCron(
         address _from,
         address _to,
         uint256 _amount,
-        int256 _price,
-        token memory _token,
-        connextModule memory _connextModule,
-        gelatoModule memory _gelatoModule,
-        uint256 _relayerFeeInTransactingAsset
+        uint256 _price,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 _destinationDomain,
+        address _destinationContract,
+        uint256 _cycles,
+        uint256 _startTime,
+        uint256 _interval,
+        uint256 _relayerFeeInTransactingAsset       
     ) public payable {
-        require(IERC20(_token._fromToken).allowance(msg.sender, address(this)) >= _amount, "User must approve amount");
+        if (_amount < _relayerFeeInTransactingAsset) {
+            revert AmountLessThanRelayer(_amount, _relayerFeeInTransactingAsset);
+        }
 
-        // User sends funds to this contract
-        IERC20(_token._fromToken).transferFrom(_from, address(this), _amount);
+        if (IERC20(_fromToken).allowance(_from, address(this)) < _amount) {
+            revert Allowance(IERC20(_fromToken).allowance(_from, address(this)), _amount, _fromToken);
+        }
 
+        IERC20(_fromToken).transferFrom(_from, address(this), _amount);
         uint256 slippage = 300;
 
         uint256 amountOut = _amount;
 
-        if (_token._fromToken != _token._toToken && block.chainid == _connextModule._toChain) {
-            amountOut = swapExactInputSingle(_token._fromToken, _token._toToken, _amount);
-            IERC20(_token._toToken).transferFrom(address(this), _to, amountOut);
-        } else if (block.chainid != _connextModule._toChain) {
+        if (block.chainid == _toChain && _fromToken != _toToken) {
+            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
+            IERC20(_toToken).transferFrom(address(this), _to, amountOut);
+        } else if (block.chainid != _toChain) {
             xTransfer(
+                _from,
                 _to,
-                _connextModule._destinationContract,
-                _connextModule._destinationDomain,
-                _token._fromToken,
-                _token._toToken,
+                _destinationContract,
+                _destinationDomain,
+                _fromToken,
+                _toToken,
                 amountOut,
                 slippage,
                 _relayerFeeInTransactingAsset
             );
         } else {
-            IERC20(_token._fromToken).transferFrom(address(this), _to, _amount);
+            IERC20(_fromToken).transferFrom(address(this), _to, _amount);
         }
 
-        bytes32 _jobId = _getAutomateJobId(_from, _to, _amount, _token, _connextModule, _gelatoModule);
+        bytes32 _jobId = _getAutomateJobId(
+            _from,
+            _to,
+            _amount,
+            _price,
+            _fromToken,
+            _toToken,
+            _toChain,
+            _destinationDomain,
+            _destinationContract,
+            _cycles,
+            _startTime,
+            _interval
+        );
 
-        user memory userInfo = _createdJobs[_jobId];
+        user storage userInfo = _createdJobs[_jobId];
         userInfo._executedCycles++;
 
         if (userInfo._executedCycles == userInfo._totalCycles) {
             _cancelJob(_jobId);
         }
 
-        // (uint256 fee, address feeToken) = _getFeeDetails();
-        // treasury.useFunds(userInfo._user, fee, feeToken);
-        // _transfer(fee, feeToken);
+        (uint256 fee, address feeToken) = _getFeeDetails();
+        treasury.useFunds(userInfo._user, fee, feeToken);
+    }
+
+    function _transferGas() external payable {
+        (uint256 fee, address feeToken) = _getFeeDetails();
+
+        treasury.depositFunds{value: msg.value}(msg.sender, feeToken,fee);
     }
 
     function getBalanceOfToken(address _address) public view returns (uint256) {
@@ -413,25 +578,30 @@ contract Conditional is AutomateTaskCreator {
         address _from,
         address _to,
         uint256 _amount,
-        token memory _token,
-        connextModule memory _connextModule,
-        gelatoModule memory _gelatoModule
+        uint256 _price,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 _destinationDomain,
+        address _destinationContract,
+        uint256 _cycles,
+        uint256 _startTime,
+        uint256 _interval
     ) public pure returns (bytes32) {
         return keccak256(
             abi.encode(
                 _from,
                 _to,
                 _amount,
-                _gelatoModule._cycles,
-                _gelatoModule._startTime,
-                _gelatoModule._interval,
-                _token._fromToken,
-                _token._toToken,
-                _token._tokenA,
-                _token._tokenB,
-                _connextModule._toChain,
-                _connextModule._destinationContract,
-                _connextModule._destinationDomain
+                _price,
+                _fromToken,
+                _toToken,
+                _toChain,
+                _destinationDomain,
+                _destinationContract,
+                _cycles,
+                _startTime,
+                _interval
             )
         );
     }
