@@ -23,6 +23,8 @@ import "./interfaces/Treasury.sol";
 contract AutoPay is AutomateTaskCreator {
     using SafeERC20 for IERC20;
     using Strings for address;
+    using Address for address;
+    using Address for address payable;
 
     receive() external payable {}
 
@@ -182,15 +184,16 @@ contract AutoPay is AutomateTaskCreator {
         );
 
         emit XTransferData(
-            from, recipient, 
-            fromToken, 
+            from,
+            recipient,
+            fromToken,
             toToken,
             destinationContract,
-            amount, 
-            block.timestamp, 
-            relayerFeeInTransactingAsset, 
+            amount,
+            block.timestamp,
+            relayerFeeInTransactingAsset,
             destinationDomain
-        );
+            );
     }
 
     function xReceive(
@@ -215,6 +218,40 @@ contract AutoPay is AutomateTaskCreator {
         IERC20(_asset).transfer(_recipient, amountOut);
 
         emit XReceiveData(_originSender, _origin, _asset, _amount, _transferId, block.timestamp, _sender, _recipient);
+    }
+
+    function directSwapperCall(address _swapper, bytes calldata swapData) public payable returns (uint256 amountOut) {
+        bytes memory ret = _swapper.functionCallWithValue(swapData, msg.value, "!directSwapperCallFailed");
+        amountOut = abi.decode(ret, (uint256));
+    }
+
+    function _setupAndSwap(
+        address _fromAsset,
+        address _toAsset,
+        uint256 _amountIn,
+        address _swapper,
+        bytes calldata _swapData
+    ) internal returns (uint256 amountOut) {
+        TransferHelper.safeTransferFrom(_fromAsset, msg.sender, address(this), _amountIn);
+
+        if (_fromAsset != _toAsset) {
+            require(_swapper != address(0), "SwapAndXCall: zero swapper!");
+
+            // If fromAsset is not native and allowance is less than amountIn
+            if (IERC20(_fromAsset).allowance(address(this), _swapper) < _amountIn) {
+                TransferHelper.safeApprove(_fromAsset, _swapper, type(uint256).max);
+            }
+
+            amountOut = directSwapperCall(_swapper, _swapData);
+        } else {
+            amountOut = _amountIn;
+        }
+
+        if (_toAsset != address(0)) {
+            if (IERC20(_toAsset).allowance(address(this), address(connext)) < amountOut) {
+                TransferHelper.safeApprove(_toAsset, address(connext), type(uint256).max);
+            }
+        }
     }
 
     function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
@@ -316,7 +353,9 @@ contract AutoPay is AutomateTaskCreator {
             _cycles,
             _startTime,
             _interval,
-            0
+            0,
+            address(0),
+            bytes("")
         );
 
         ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
@@ -330,48 +369,6 @@ contract AutoPay is AutomateTaskCreator {
 
         bytes32 id = _createTask(address(this), execData, moduleData, address(0));
 
-        return id;
-    }
-
-    function _gelatoTimeJobCreator(
-        address _from,
-        address _to,
-        uint256 _amount,
-        address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        uint32 _destinationDomain,
-        address _destinationContract,
-        uint256 _cycles,
-        uint256 _startTime,
-        uint256 _interval
-    ) internal returns (bytes32) {
-        bytes memory execData = abi.encodeWithSelector(
-            this._timeAutomateCron.selector,
-            _from,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationDomain,
-            _destinationContract,
-            _cycles,
-            _startTime,
-            _interval,
-            0
-        );
-
-        ModuleData memory moduleData;
-
-        moduleData = ModuleData({modules: new Module[](2), args: new bytes[](2)});
-        moduleData.modules[0] = Module.TIME;
-        moduleData.modules[1] = Module.PROXY;
-
-        moduleData.args[0] = _timeModuleArg(_startTime, _interval);
-        moduleData.args[1] = _proxyModuleArg();
-
-        bytes32 id = _createTask(address(this), execData, moduleData, ETH);
         return id;
     }
 
@@ -502,9 +499,11 @@ contract AutoPay is AutomateTaskCreator {
         address _destinationContract,
         uint256 _cycles,
         uint256 _startTime,
-        uint256 _interval, // to be removed
-        uint256 _relayerFeeInTransactingAsset
-    ) external {
+        uint256 _interval, 
+        uint256 _relayerFeeInTransactingAsset,
+        address _swapper,
+        bytes calldata _swapData
+    ) public payable {
         if (_amount < _relayerFeeInTransactingAsset) {
             revert AmountLessThanRelayer(_amount, _relayerFeeInTransactingAsset);
         }
@@ -519,7 +518,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 amountOut = _amount;
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
-            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
+            amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
             IERC20(_toToken).transferFrom(address(this), _to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
@@ -559,11 +558,8 @@ contract AutoPay is AutomateTaskCreator {
         }
 
         // (uint256 fee, address feeToken) = _getFeeDetails();
-        // treasury.useFunds(userInfo._user, fee, feeToken); 
+        // treasury.useFunds(userInfo._user, fee, feeToken);
     }
-
-
-
 
     // ============================= CONDITIONAL TIME AUTOMATE ===============================
 
@@ -585,7 +581,6 @@ contract AutoPay is AutomateTaskCreator {
     ) public view returns (bytes memory) {
         string memory __amount = Strings.toString(_amount);
         string memory __price = Strings.toString(_price);
-
 
         return (
             abi.encode(
@@ -647,7 +642,9 @@ contract AutoPay is AutomateTaskCreator {
             _cycles,
             _startTime,
             _interval,
-            0
+            0,
+            address(0),
+            bytes("")
         );
 
         ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
@@ -663,7 +660,6 @@ contract AutoPay is AutomateTaskCreator {
 
         return id;
     }
-
 
     function _createPriceFeedAutomate(
         address _to,
@@ -778,19 +774,19 @@ contract AutoPay is AutomateTaskCreator {
                 revert Allowance(IERC20(_fromToken[i]).allowance(msg.sender, address(this)), _amount[i], _fromToken[i]);
             }
             _createPriceFeedAutomate(
-                 _to[i],
-                 _amount[i],
-                 _price[i],
-                 _fromToken[i],
-                 _toToken[i],
-                 _tokenA[i],
-                 _tokenB[i],
-                 _toChain[i],
-                 _destinationDomain[i],
-                 _destinationContract[i],
-                 _cycles[i],
-                 _startTime[i],
-                 _interval[i],
+                _to[i],
+                _amount[i],
+                _price[i],
+                _fromToken[i],
+                _toToken[i],
+                _tokenA[i],
+                _tokenB[i],
+                _toChain[i],
+                _destinationDomain[i],
+                _destinationContract[i],
+                _cycles[i],
+                _startTime[i],
+                _interval[i],
                 _web3FunctionHash
             );
         }
@@ -811,7 +807,9 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _cycles,
         uint256 _startTime,
         uint256 _interval,
-        uint256 _relayerFeeInTransactingAsset       
+        uint256 _relayerFeeInTransactingAsset,
+        address _swapper,
+        bytes calldata _swapData
     ) public payable {
         if (_amount < _relayerFeeInTransactingAsset) {
             revert AmountLessThanRelayer(_amount, _relayerFeeInTransactingAsset);
@@ -827,7 +825,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 amountOut = _amount;
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
-            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
+            amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
             IERC20(_toToken).transferFrom(address(this), _to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
@@ -874,7 +872,7 @@ contract AutoPay is AutomateTaskCreator {
     function _transferGas() external payable {
         (uint256 fee, address feeToken) = _getFeeDetails();
 
-        treasury.depositFunds{value: msg.value}(msg.sender, feeToken,fee);
+        treasury.depositFunds{value: msg.value}(msg.sender, feeToken, fee);
     }
 
     function getBalanceOfToken(address _address) public view returns (uint256) {
@@ -912,7 +910,7 @@ contract AutoPay is AutomateTaskCreator {
             )
         );
     }
-    
+
     function _getAutomateJobId(
         address _from,
         address _to,
