@@ -1,3 +1,5 @@
+const { gnosis } = require("@connext/smart-contracts/dist/src/typechain-types/contracts/messaging/connectors");
+
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 require("@nomiclabs/hardhat-etherscan");
@@ -21,7 +23,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: process.env.ALCHEMY_MUMBAI_API_URL
+        url: "https://rpc.ankr.com/gnosis"
       }
     },
     goerli: {
@@ -34,27 +36,28 @@ module.exports = {
       url: process.env.ALCHEMY_MUMBAI_API_URL,
       accounts: [process.env.PRIVATE_KEY]
     },
-    zkEVM : {
+    zkEVM: {
       chainId: 1442,
       url: "https://rpc.public.zkevm-test.net",
       accounts: [process.env.PRIVATE_KEY]
 
     },
-    // gnosis: {
-    //   chainId: 100,
-    //   url: process.env.ALCHEMY_GNOSIS_API_URL,
-    //   accounts: [process.env.PRIVATE_KEY]
-    // },
-    // polygon: {
-    //   chainId: 137,
-    //   url: process.env.ALCHEMY_POLYGON_API_URL,
-    //   accounts: [process.env.PRIVATE_KEY]
-    // },
+    gnosis: {
+      chainId: 100,
+      url: process.env.ALCHEMY_GNOSIS_API_URL,
+      accounts: [process.env.PRIVATE_KEY]
+    },
+    polygon: {
+      chainId: 137,
+      url: process.env.ALCHEMY_POLYGON_API_URL,
+      accounts: [process.env.PRIVATE_KEY]
+    },
   },
   etherscan: {
     apiKey: {
       goerli: process.env.ETHERSCAN_API_KEY,
-      polygonMumbai: process.env.POLYGONSCAN_API_KEY
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY,
+      gnosis: process.env.GNOSISCAN_API_KEY
     }
   },
   docgen: {}

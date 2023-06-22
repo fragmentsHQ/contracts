@@ -85,6 +85,35 @@ const deployMumbai = async () => {
   });
 }
 
+const deployGnosis = async () => {
+  const AutoPay = await hre.ethers.getContractFactory("AutoPay");
+  const autoPay = await hre.upgrades.deployProxy(AutoPay, [
+    "0x5bB83e95f63217CDa6aE3D181BA580Ef377D2109",
+    "0x1C232F01118CB8B424793ae03F870aa7D0ac7f77",
+    "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0"],
+    {
+      kind: 'uups'
+    }
+  );
+
+  await autoPay.deployed();
+
+  console.log(
+    `Deployed to ${autoPay.address}`
+  );
+
+
+  const currentImplAddress = await getImplementationAddress(hre.network.provider, autoPay.address);
+
+  console.log('Implementation Contract Address:', currentImplAddress);
+
+  await hre.run("verify:verify", {
+    address: currentImplAddress,
+  });
+}
+
+
+
 
 
 async function main() {
@@ -97,6 +126,8 @@ async function main() {
     deployMumbai();
   } else if (chainId == 1442){
     deployzkEVM();
+  } else if(chainId == 31337){
+    deployGnosis();
   }
 
 }

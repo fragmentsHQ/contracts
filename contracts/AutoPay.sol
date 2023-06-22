@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {IUniswapV2Router02} from "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import {IConnext} from "@connext/smart-contracts/contracts/core/connext/interfaces/IConnext.sol";
@@ -43,7 +44,8 @@ contract AutoPay is AutomateTaskCreator {
     event FundsWithdrawn(address indexed receiver, address indexed initiator, address indexed token, uint256 amount);
 
     IConnext public connext;
-    ISwapRouter public swapRouter;
+    // ISwapRouter public swapRouter;
+    IUniswapV2Router02 public  uniswapV2Router;
 
     address public constant WETH = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
 
@@ -62,11 +64,11 @@ contract AutoPay is AutomateTaskCreator {
         _disableInitializers();
     }
 
-    function initialize(IConnext _connext, ISwapRouter _swapRouter, address payable _ops) public initializer {
+    function initialize(IConnext _connext, IUniswapV2Router02 _swapRouter, address payable _ops) public initializer {
         AutomateTaskCreator.ATC__initialize(_ops, msg.sender);
 
         connext = _connext;
-        swapRouter = _swapRouter;
+        uniswapV2Router = _swapRouter;
         FEES = 10000;
 
         __Ownable_init();
@@ -172,7 +174,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 amountOut;
 
         if (fromToken != WETH) {
-            amountOut = swapExactInputSingle(fromToken, WETH, amount);
+            amountOut = UniV2Swapper(fromToken, WETH, amount);
         }
 
         if (fromToken != address(0)) {
@@ -227,7 +229,7 @@ contract AutoPay is AutomateTaskCreator {
 
         uint256 amountOut = _amount;
         if (_asset != _toToken) {
-            amountOut = swapExactInputSingle(_asset, _toToken, amountOut);
+            amountOut = UniV2Swapper(_asset, _toToken, amountOut);
         }
 
         IERC20(_asset).transfer(_recipient, amountOut);
@@ -263,31 +265,55 @@ contract AutoPay is AutomateTaskCreator {
         }
     }
 
-    function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
-        public
-        returns (uint256 amountOut)
-    {
-        uint24 poolFee = 500;
-        TransferHelper.safeApprove(_fromToken, address(swapRouter), amountIn);
+    // function UniV3Swapper(address _fromToken, address _toToken, uint256 amountIn)
+    //     public
+    //     returns (uint256 amountOut)
+    // {
+    //     uint24 poolFee = 500;
+    //     TransferHelper.safeApprove(_fromToken, address(swapRouter), amountIn);
 
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: _fromToken,
-            tokenOut: _toToken,
-            fee: poolFee,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-        });
+    //     ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+    //         tokenIn: _fromToken,
+    //         tokenOut: _toToken,
+    //         fee: poolFee,
+    //         recipient: address(this),
+    //         deadline: block.timestamp,
+    //         amountIn: amountIn,
+    //         amountOutMinimum: 0,
+    //         sqrtPriceLimitX96: 0
+    //     });
 
-        amountOut = swapRouter.exactInputSingle(params);
-        return amountOut;
+    //     amountOut = swapRouter.exactInputSingle(params);
+    //     return amountOut;
+    // }
+
+    function UniV2Swapper(
+        address _fromAsset,
+        address _toAsset,
+        uint256 _amountIn
+    ) internal  returns (uint256 amountOut) {
+
+        if (_fromAsset != _toAsset) {
+            address[] memory path;
+            path = new address[](2);
+            path[0] = _fromAsset;
+            path[1] = _toAsset;
+
+            uint[] memory amounts = uniswapV2Router.getAmountsOut(_amountIn,path);
+            uint amountOutMin = amounts[1];
+
+            TransferHelper.safeApprove(_fromAsset, address(uniswapV2Router), _amountIn);
+
+            amounts = uniswapV2Router.swapExactTokensForTokens(_amountIn, amountOutMin, path, address(this), block.timestamp);
+        
+            amountOut = amounts[amounts.length - 1];
+        }
     }
 
     function _cancelJob(bytes32 _jobId) public {
         user memory _userInfo = _createdJobs[_jobId];
         require(_userInfo._user != address(0), "No JOB Found");
+        require(_userInfo._user == msg.sender, "Not Authorised");
 
         _cancelTask(_userInfo._gelatoTaskID);
 
@@ -521,7 +547,7 @@ contract AutoPay is AutomateTaskCreator {
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
             amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
-            IERC20(_toToken).transferFrom(address(this), _to, amountOut);
+            IERC20(_toToken).transfer(_to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
                 _from,
@@ -535,7 +561,7 @@ contract AutoPay is AutomateTaskCreator {
                 _relayerFeeInTransactingAsset
             );
         } else {
-            IERC20(_fromToken).transferFrom(address(this), _to, _amount);
+            IERC20(_fromToken).transfer(_to, _amount);
         }
 
          bytes32 _jobId = _getAutomateJobId(
@@ -819,7 +845,7 @@ contract AutoPay is AutomateTaskCreator {
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
             amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
-            IERC20(_toToken).transferFrom(address(this), _to, amountOut);
+            IERC20(_toToken).transfer(_to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
                 _from,
@@ -833,7 +859,7 @@ contract AutoPay is AutomateTaskCreator {
                 _relayerFeeInTransactingAsset
             );
         } else {
-            IERC20(_fromToken).transferFrom(address(this), _to, _amount);
+            IERC20(_fromToken).transfer(_to, _amount);
         }
 
         bytes32 _jobId = _getAutomateJobId(
