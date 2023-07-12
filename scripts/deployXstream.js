@@ -25,9 +25,9 @@ const deployGoerli = async () => {
   );
 
   const currentImplAddress = await getImplementationAddress(hre.network.provider, xStreamPool.address);
-  
+
   console.log('Implementation Contract Address:', currentImplAddress);
-  
+
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
@@ -52,9 +52,9 @@ const deployMumbai = async () => {
   );
 
   const currentImplAddress = await getImplementationAddress(hre.network.provider, xStreamPool.address);
-  
+
   console.log('Implementation Contract Address:', currentImplAddress);
-  
+
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
@@ -78,9 +78,9 @@ const deployPolygon = async () => {
   );
 
   const currentImplAddress = await getImplementationAddress(hre.network.provider, xStreamPool.address);
-  
+
   console.log('Implementation Contract Address:', currentImplAddress);
-  
+
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
@@ -104,9 +104,9 @@ const deployGnosis = async () => {
   );
 
   const currentImplAddress = await getImplementationAddress(hre.network.provider, xStreamPool.address);
-  
+
   console.log('Implementation Contract Address:', currentImplAddress);
-  
+
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });

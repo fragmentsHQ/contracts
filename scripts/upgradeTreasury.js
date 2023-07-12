@@ -3,15 +3,22 @@ const { ethers, upgrades } = require('hardhat');
 const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
 
 
-async function upgradeConditional() {
+async function upgradeGoerli() {
+
+  //  impersonating vitalik's account
+  await network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: ["0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7"],
+  });
+
   //put the current proxy address for respective network here
-  const currentProxyAddress = '0xDc7EcF12CFf43ea2d40Ad475b6BB0C5Fe6dD368A'
+  const currentProxyAddress = '0x6e2b6959c81183dCe1EB5819E573092bee28511b'
 
-  const ConditionalV2 = await ethers.getContractFactory('Conditional');
+  const TreasuryV2 = await ethers.getContractFactory('Treasury');
 
-  console.log('Upgrading Conditional...');
-  await upgrades.upgradeProxy(currentProxyAddress, ConditionalV2);
-  console.log('Conditional upgraded');
+  console.log('Upgrading Treasury...');
+  await upgrades.upgradeProxy(currentProxyAddress, TreasuryV2);
+  console.log('Treasury upgraded');
 
   const currentImplAddress = await getImplementationAddress(hre.network.provider, currentProxyAddress);
 
@@ -22,17 +29,15 @@ async function upgradeConditional() {
   });
 }
 
-async function upgradeAutoPay() {
+async function upgradeMumbai() {
   //put the current proxy address for respective network here
-  const currentProxyAddress = '0xA8e3315CE15cADdB4616AefD073e4CBF002C5D73'
+  const currentProxyAddress = '0x1Ff5C1D4713772C5AA17d551039d9599Bc65C31C'
 
-  const AutopayV2 = await ethers.getContractFactory('AutoPay');
+  const TreasuryV2 = await ethers.getContractFactory('Treasury');
 
-  console.log('Upgrading Autopay...');
-  await upgrades.upgradeProxy(currentProxyAddress, AutopayV2, {
-    kind: 'uups'
-  });
-  console.log('Autopay upgraded');
+  console.log('Upgrading Treasury...');
+  await upgrades.upgradeProxy(currentProxyAddress, TreasuryV2);
+  console.log('Treasury upgraded');
 
   const currentImplAddress = await getImplementationAddress(hre.network.provider, currentProxyAddress);
 
@@ -43,30 +48,21 @@ async function upgradeAutoPay() {
   });
 }
 
-async function upgradeXStream() {
-  //put the current proxy address for respective network here
-  const currentProxyAddress = '0x0...'
 
-  const XStreamV2 = await ethers.getContractFactory('XStreamV2');
-
-  console.log('Upgrading XStream...');
-  await upgrades.upgradeProxy(currentProxyAddress, XStreamV2);
-  console.log('XStream upgraded');
-
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, currentProxyAddress);
-
-  console.log('New Implementation Contract Address:', currentImplAddress);
-
-  await hre.run("verify:verify", {
-    address: currentImplAddress,
-  });
-}
 
 
 async function main() {
-  upgradeConditional()
-  // upgradeAutoPay()
-  // upgradeXStream()
+  const chainId = hre.network.config.chainId;
+  console.log(chainId);
+
+  if (chainId == 5) {
+    upgradeGoerli();
+  } else if (chainId == 80001) {
+    upgradeMumbai();
+  } else {
+    upgradeGoerli();
+    // upgradeMumbai();
+  }
 }
 
 main();

@@ -111,7 +111,7 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
 
         userTokenBalance[msg.sender][_token] = balance - withdrawAmount;
 
-        // _transfer(_receiver, _token, withdrawAmount);
+        _transfer(_receiver, _token, withdrawAmount);
 
         if (withdrawAmount == balance) _tokenCredits[msg.sender].remove(_token);
 
@@ -127,14 +127,20 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
         uint256 _amount,
         address _user
     ) external onlyWhitelistedServices {
+        address _owner = owner();
+        require(_amount > userTokenBalance[_owner][_token], "useFunds: ETH transfer failed");
+
         userTokenBalance[_user][_token] =
             userTokenBalance[_user][_token] -
+            _amount;
+        
+        userTokenBalance[_owner][_token] =
+            userTokenBalance[_owner][_token] -
             _amount;
 
         if (userTokenBalance[_user][_token] == 0)
             _tokenCredits[_user].remove(_token);
 
-        _transfer(payable(msg.sender), _token, _amount);
     }
 
     // Governance functions

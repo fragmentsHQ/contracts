@@ -61,6 +61,8 @@ async function main() {
     deployGoerli();
   } else if (chainId == 80001) {
     deployMumbai();
+  } else {
+    deployGoerli();
   }
 
 }

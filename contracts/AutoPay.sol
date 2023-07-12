@@ -45,7 +45,7 @@ contract AutoPay is AutomateTaskCreator {
     IConnext public connext;
     ISwapRouter public swapRouter;
 
-    address public constant WETH = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
+    address public constant WETH = 0xFD2AB41e083c75085807c4A65C0A14FDD93d55A9; ///TODO TO BE UPDATED
 
     struct user {
         address _user;
@@ -55,7 +55,7 @@ contract AutoPay is AutomateTaskCreator {
     }
 
     mapping(bytes32 => user) public _createdJobs;
-    mapping(address => mapping(address => uint256)) public userBalance;
+    mapping(address => mapping(address => uint256)) public userBalance; ///TODO TO BE REMOVED
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -74,6 +74,7 @@ contract AutoPay is AutomateTaskCreator {
     }
 
     ITreasury public treasury;
+    // mapping(Option => string) public web3functionHashes;
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
@@ -152,13 +153,21 @@ contract AutoPay is AutomateTaskCreator {
         address receiverAccount
     );
 
+    event ExecutedSourceChain (
+        bytes32 indexed _jobId,
+        address indexed _from,
+        uint256 _timesExecuted,
+        uint256 _fundsUsed,
+        uint256 _amountOut
+    );
+
     function checkBalance() public view returns (uint256) {
         return address(this).balance;
     }
 
     error AmountLessThanRelayer(uint256 _amount, uint256 _relayerFeeInTransactingAsset);
 
-     function xTransfer(
+    function xTransfer(
         address from,
         address recipient,
         address destinationContract,
@@ -230,7 +239,7 @@ contract AutoPay is AutomateTaskCreator {
             amountOut = swapExactInputSingle(_asset, _toToken, amountOut);
         }
 
-        IERC20(_asset).transfer(_recipient, amountOut);
+        TransferHelper.safeTransfer(_asset, _recipient, amountOut);
 
         emit XReceiveData(_originSender, _origin, _asset, _amount, _transferId, block.timestamp, _sender, _recipient);
     }
@@ -493,7 +502,6 @@ contract AutoPay is AutomateTaskCreator {
         }
     }
 
-
     function _timeAutomateCron(
         address _from,
         address _to,
@@ -509,19 +517,24 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _relayerFeeInTransactingAsset,
         address _swapper,
         bytes calldata _swapData
-    ) public  {
+    ) public {
+        uint256 gasRemaining = gasleft();
+
         if (IERC20(_fromToken).allowance(_from, address(this)) < _amount) {
             revert Allowance(IERC20(_fromToken).allowance(_from, address(this)), _amount, _fromToken);
         }
 
-        TransferHelper.safeTransferFrom(_fromToken, _from, address(this), _amount);
+        // TransferHelper.safeTransferFrom(_fromToken, _from, address(this), _amount);
+        IERC20(_fromToken).transferFrom(_from, address(this), _amount);
         uint256 slippage = 300;
 
         uint256 amountOut = _amount;
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
             amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
-            IERC20(_toToken).transferFrom(address(this), _to, amountOut);
+            // amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
+            // TransferHelper.safeTransfer(_toToken, _to, amountOut);
+            IERC20(_toToken).transfer(_to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
                 _from,
@@ -535,10 +548,11 @@ contract AutoPay is AutomateTaskCreator {
                 _relayerFeeInTransactingAsset
             );
         } else {
-            IERC20(_fromToken).transferFrom(address(this), _to, _amount);
+            // TransferHelper.safeTransfer(_fromToken, _to, amountOut);
+             IERC20(_fromToken).transfer(_to, amountOut);
         }
 
-         bytes32 _jobId = _getAutomateJobId(
+        bytes32 _jobId = _getAutomateJobId(
             _from,
             _to,
             _amount,
@@ -558,6 +572,21 @@ contract AutoPay is AutomateTaskCreator {
         if (userInfo._executedCycles == userInfo._totalCycles) {
             _cancelJob(_jobId);
         }
+
+        // Check the remaining gas again
+        uint256 gasRemaining2 = gasleft();
+        // Calculate the gas consumed by the operations
+        uint256 gasConsumed = (gasRemaining - gasRemaining2) * tx.gasprice;
+        gasConsumed = gasConsumed + (gasConsumed * 25/100);
+        treasury.useFunds(ETH, gasConsumed, _from);
+
+        emit ExecutedSourceChain(
+            _jobId,
+            _from,
+            userInfo._executedCycles,
+            gasConsumed,
+            amountOut
+        );
     }
 
     // ============================= CONDITIONAL TIME AUTOMATE ===============================
@@ -716,7 +745,7 @@ contract AutoPay is AutomateTaskCreator {
             _web3FunctionArgsHex
         );
 
-        bytes32 _jobId = _getAutomateJobId(
+        bytes32 _jobId = _getConditionalJobId(
             msg.sender,
             _to,
             _amount,
@@ -791,7 +820,7 @@ contract AutoPay is AutomateTaskCreator {
         }
     }
 
-       function _conditionalAutomateCron(
+    function _conditionalAutomateCron(
         address _from,
         address _to,
         uint256 _amount,
@@ -807,7 +836,9 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _relayerFeeInTransactingAsset,
         address _swapper,
         bytes calldata _swapData
-    ) public  {
+    ) public {
+        uint256 gasRemaining = gasleft();
+
         if (IERC20(_fromToken).allowance(_from, address(this)) < _amount) {
             revert Allowance(IERC20(_fromToken).allowance(_from, address(this)), _amount, _fromToken);
         }
@@ -819,7 +850,7 @@ contract AutoPay is AutomateTaskCreator {
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
             amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
-            IERC20(_toToken).transferFrom(address(this), _to, amountOut);
+            TransferHelper.safeTransfer(_toToken, _to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
                 _from,
@@ -833,10 +864,10 @@ contract AutoPay is AutomateTaskCreator {
                 _relayerFeeInTransactingAsset
             );
         } else {
-            IERC20(_fromToken).transferFrom(address(this), _to, _amount);
+            TransferHelper.safeTransfer(_fromToken, _to, amountOut);
         }
 
-        bytes32 _jobId = _getAutomateJobId(
+        bytes32 _jobId = _getConditionalJobId(
             _from,
             _to,
             _amount,
@@ -857,6 +888,24 @@ contract AutoPay is AutomateTaskCreator {
         if (userInfo._executedCycles == userInfo._totalCycles) {
             _cancelJob(_jobId);
         }
+
+         // Check the remaining gas again
+        uint256 gasRemaining2 = gasleft();
+        // Calculate the gas consumed by the operations
+        uint256 gasConsumed = (gasRemaining - gasRemaining2) * tx.gasprice;
+        gasConsumed = gasConsumed + (gasConsumed * 25/100);
+        treasury.useFunds(ETH, gasConsumed, _from);
+
+        emit ExecutedSourceChain(
+            _jobId,
+            _from,
+            userInfo._executedCycles,
+            gasConsumed,
+            amountOut
+        );
+
+        // (uint256 fee, address feeToken) = _getFeeDetails();
+        // ITreasury(treasury).depositFunds{value: fee}(msg.sender, feeToken, fee);
     }
 
     function _transferGas() external payable {
@@ -869,7 +918,7 @@ contract AutoPay is AutomateTaskCreator {
         return IERC20(_address).balanceOf(address(this));
     }
 
-    function _getAutomateJobId(
+    function _getConditionalJobId(
         address _from,
         address _to,
         uint256 _amount,
@@ -934,4 +983,10 @@ contract AutoPay is AutomateTaskCreator {
     function updateTreasury(address _treasury) external onlyOwner {
         treasury = ITreasury(_treasury);
     }
+
+    // function updateWeb3functionHashes(Option[] calldata _types, string[] calldata _hashes) external onlyOwner {
+    //     for (uint256 i = 0; i < _types.length; i++) {
+    //         web3functionHashes[_types[i]] = _hashes[i];
+    //     }
+    // }
 }
