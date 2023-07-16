@@ -12,7 +12,8 @@
     "deploy:treasury": "npx hardhat run scripts/deployTreasury.js",
     "upgrade:autopay" : "npx hardhat run scripts/upgradeAutopay.js",
     "upgrade:conditional" : "npx hardhat run scripts/upgradeConditional.js",
-    "upgrade:treasury" : "npx hardhat run scripts/upgradeTreasury.js"
+    "upgrade:treasury" : "npx hardhat run scripts/upgradeTreasury.js",
+    "docgen" : "npx hardhat docgen"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",

@@ -1,3 +1,15 @@
+/**
+ *          _         _        ____                  _______                                     _     __  
+ *        / \  _   _| |_ ___ |  _ \ __ _ _   _     / /  ___| __ __ _  __ _ _ __ ___   ___ _ __ | |_ __\ \ 
+ *       / _ \| | | | __/ _ \| |_) / _` | | | |   | || |_ | '__/ _` |/ _` | '_ ` _ \ / _ \ '_ \| __/ __| |
+ *      / ___ \ |_| | || (_) |  __/ (_| | |_| |   | ||  _|| | | (_| | (_| | | | | | |  __/ | | | |_\__ \ |
+ *     /_/   \_\__,_|\__\___/|_|   \__,_|\__, |   | ||_|  |_|  \__,_|\__, |_| |_| |_|\___|_| |_|\__|___/ |
+ *                                    |___/     \_\               |___/                            /_/ 
+ *                              
+ * 
+ *     Smart contract for AUTOPAY functionality.
+ */
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 pragma abicoder v2;
@@ -32,20 +44,17 @@ contract AutoPay is AutomateTaskCreator {
 
     uint256 public FEES;
 
+    IConnext public connext;
+    ISwapRouter public swapRouter;
+    ITreasury public treasury;
+    address public WETH;
+
     enum Option {
         TIME,
         PRICE_FEED,
         CONTRACT_VARIBLES,
         GAS_PRICE
     }
-
-    event FundsDeposited(address indexed sender, address indexed token, uint256 indexed amount);
-    event FundsWithdrawn(address indexed receiver, address indexed initiator, address indexed token, uint256 amount);
-
-    IConnext public connext;
-    ISwapRouter public swapRouter;
-
-    address public constant WETH = 0xFD2AB41e083c75085807c4A65C0A14FDD93d55A9; ///TODO TO BE UPDATED
 
     struct user {
         address _user;
@@ -55,36 +64,7 @@ contract AutoPay is AutomateTaskCreator {
     }
 
     mapping(bytes32 => user) public _createdJobs;
-    mapping(address => mapping(address => uint256)) public userBalance; ///TODO TO BE REMOVED
-
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    function initialize(IConnext _connext, ISwapRouter _swapRouter, address payable _ops) public initializer {
-        AutomateTaskCreator.ATC__initialize(_ops, msg.sender);
-
-        connext = _connext;
-        swapRouter = _swapRouter;
-        FEES = 10000;
-
-        __Ownable_init();
-        __UUPSUpgradeable_init();
-    }
-
-    ITreasury public treasury;
-    // mapping(Option => string) public web3functionHashes;
-
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
-
-    modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source) {
-        require(
-            _origin == _originDomain && _originSender == _source && msg.sender == address(connext),
-            "Expected original caller to be source contract on origin domain and this to be called by Connext"
-        );
-        _;
-    }
+    mapping(Option => string) public _web3functionHashes;
 
     event JobCreated(
         address indexed _taskCreator,
@@ -153,20 +133,90 @@ contract AutoPay is AutomateTaskCreator {
         address receiverAccount
     );
 
-    event ExecutedSourceChain (
-        bytes32 indexed _jobId,
-        address indexed _from,
-        uint256 _timesExecuted,
-        uint256 _fundsUsed,
-        uint256 _amountOut
+    event ExecutedSourceChain(
+        bytes32 indexed _jobId, address indexed _from, uint256 _timesExecuted, uint256 _fundsUsed, uint256 _amountOut
     );
 
+    /**
+     * @notice  .Modifier to check at only source contract calls an xcall to destination chain
+     * @dev     .
+     * @param   _originSender  . address of origin contract(address(this))
+     * @param   _origin  . connext domain of source chain
+     * @param   _originDomain  . connext domain of source chain
+     * @param   _source  . contract address of origin contract passed as arguement
+     */
+    modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source) {
+        require(
+            _origin == _originDomain && _originSender == _source && msg.sender == address(connext),
+            "Expected original caller to be source contract on origin domain and this to be called by Connext"
+        );
+        _;
+    }
+
+    error Allowance(uint256 allowance, uint256 amount, address token);
+    error AmountLessThanRelayer(uint256 _amount, uint256 _relayerFeeInTransactingAsset);
+
+
+/*    
+  __                  _   _                 
+ / _|_   _ _ __   ___| |_(_) ___  _ __  ___ 
+| |_| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+|  _| |_| | | | | (__| |_| | (_) | | | \__ \
+|_|  \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+*/ 
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
+     * @notice  .Initialise function called by the proxy when deployed
+     * @dev     .
+     * @param   _connext  . address of connext router
+     * @param   _swapRouter  .address of uniswap router
+     * @param   _ops  . address of gelato ops automate
+     * @param   _WETH  . address of WETH contract
+     */
+    function initialize(IConnext _connext, ISwapRouter _swapRouter, address payable _ops, address _WETH)
+        public
+        initializer
+    {
+        AutomateTaskCreator.ATC__initialize(_ops, msg.sender);
+
+        connext = _connext;
+        swapRouter = _swapRouter;
+        WETH = _WETH;
+        FEES = 35;
+
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+    }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    /**
+     * @notice  . Function to check the ether(native) balance of the contract
+     * @dev     .
+     * @return  uint256  . balance in wei(native)
+     */
     function checkBalance() public view returns (uint256) {
         return address(this).balance;
     }
 
-    error AmountLessThanRelayer(uint256 _amount, uint256 _relayerFeeInTransactingAsset);
-
+    /**
+     * @notice  . Function called to connext on source chain to transfer xcall and funds
+     * @dev     .
+     * @param   from  . address of the user who is sending the funds
+     * @param   recipient  . address of the user who is receiving the funds
+     * @param   destinationContract  . address of the contract on the destination chain
+     * @param   destinationDomain  . connext domain of the destination chain
+     * @param   fromToken  . address of the token to be sent
+     * @param   toToken  . address of the token to be received
+     * @param   amount  . amount of tokens to be sent
+     * @param   slippage  . maximum slippage in BPS
+     * @param   relayerFeeInTransactingAsset  . relayer fee in transacting asset
+     */
     function xTransfer(
         address from,
         address recipient,
@@ -197,13 +247,13 @@ contract AutoPay is AutomateTaskCreator {
         bytes memory _callData = abi.encode(from, recipient, toToken);
 
         connext.xcall(
-            destinationDomain, // _destination: Domain ID of the destination chain
-            destinationContract, // _to: address receiving the funds on the destination
-            WETH, // _asset: address of the token contract
-            msg.sender, // _delegate: address that can revert or forceLocal on destination
-            amountOut - relayerFeeInTransactingAsset, // _amount: amount of tokens to transfer
-            slippage, // _slippage: the maximum amount of slippage the user will accept in BPS
-            _callData, // _callData: empty because we're only sending funds
+            destinationDomain,
+            destinationContract,
+            WETH,
+            msg.sender,
+            amountOut - relayerFeeInTransactingAsset,
+            slippage,
+            _callData,
             relayerFeeInTransactingAsset
         );
 
@@ -220,6 +270,17 @@ contract AutoPay is AutomateTaskCreator {
             );
     }
 
+    /**
+     * @notice  .Function called to connext on destination chain to receive xcall and funds
+     * @dev     .
+     * @param   _transferId  . connext xcall unique transfer id
+     * @param   _amount  . amount of asset recieved on the destination chain
+     * @param   _asset  . address of token received
+     * @param   _originSender  . address of source contract of AutoPay
+     * @param   _origin  . domain of origin chain
+     * @param   _callData  . calldata passed in xcall
+     * @return  bytes  .
+     */
     function xReceive(
         bytes32 _transferId,
         uint256 _amount,
@@ -249,6 +310,16 @@ contract AutoPay is AutomateTaskCreator {
         amountOut = abi.decode(ret, (uint256));
     }
 
+    /**
+     * @notice  . Function to swap assets using swapper and calldata
+     * @dev     .
+     * @param   _fromAsset  . token address of from token
+     * @param   _toAsset  . token address of to token
+     * @param   _amountIn  . amount of tokens to be swapped
+     * @param   _swapper  . address of swapper router
+     * @param   _swapData  . swapdata provider by swap APIs (1inch, 0x)
+     * @return  amountOut  . amount of tokens recieved after swap
+     */
     function _setupAndSwap(
         address _fromAsset,
         address _toAsset,
@@ -272,6 +343,14 @@ contract AutoPay is AutomateTaskCreator {
         }
     }
 
+    /**
+     * @notice  . Function to swap on chain (uniswap v3, v2)
+     * @dev     .
+     * @param   _fromToken  . token address of from token
+     * @param   _toToken  . token address of to token
+     * @param   amountIn  . amount of tokens to be swapped
+     * @return  amountOut  . amount of tokens recieved after swap
+     */
     function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
         public
         returns (uint256 amountOut)
@@ -294,9 +373,15 @@ contract AutoPay is AutomateTaskCreator {
         return amountOut;
     }
 
+    /**
+     * @notice  .Function called by taskcreator to cancel the job
+     * @dev     .
+     * @param   _jobId  . unique jobId created for each task
+     */
     function _cancelJob(bytes32 _jobId) public {
-        user memory _userInfo = _createdJobs[_jobId];
+        user storage _userInfo = _createdJobs[_jobId];
         require(_userInfo._user != address(0), "No JOB Found");
+        require(_userInfo._user != msg.sender, "Not Authorised");
 
         _cancelTask(_userInfo._gelatoTaskID);
 
@@ -305,6 +390,22 @@ contract AutoPay is AutomateTaskCreator {
 
     // TIME AUTOMATE
 
+    /**
+     * @notice  . Function to get the jobId for time automate
+     * @dev     .
+     * @param   _from  . address of the user who is sending the funds
+     * @param   _to  . address of the user who is receiving the funds
+     * @param   _amount  . amount of tokens to be sent
+     * @param   _fromToken  . address of the token to be sent
+     * @param   _toToken  . address of the token to be received
+     * @param   _toChain  . chainId of the destination chain
+     * @param   _destinationDomain  . connext domain of the destination chain
+     * @param   _destinationContract  . address of the contract on the destination chain
+     * @param   _cycles  . number of cycles to be executed
+     * @param   _startTime  . time when the first cycle should be executed (unixtime in seconds)
+     * @param   _interval  . time interval between each cycle (in seconds)
+     * @return  bytes  . returns uniqure jobId (bytes32)
+     */
     function _getWeb3FunctionHash(
         address _from,
         address _to,
@@ -339,6 +440,24 @@ contract AutoPay is AutomateTaskCreator {
         );
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _from  .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @param   _web3FunctionHash  .
+     * @param   _web3FunctionArgsHex  .
+     * @return  bytes32  .
+     */
     function _gelatoTimeJobCreator(
         address _from,
         address _to,
@@ -386,8 +505,20 @@ contract AutoPay is AutomateTaskCreator {
         return id;
     }
 
-    error Allowance(uint256 allowance, uint256 amount, address token);
-
+    /**
+     * @notice  . Function to create a scheduled time automate 
+     * @dev     .
+     * @param   _to  . address of the user who is receiving the funds
+     * @param   _amount  . amount of tokens to be sent
+     * @param   _fromToken  . address of the token to be sent
+     * @param   _toToken  . address of the token to be received
+     * @param   _toChain  . chainId of the destination chain
+     * @param   _destinationDomain  . connext domain of the destination chain
+     * @param   _destinationContract  . address of the contract on the destination chain
+     * @param   _cycles  . number of cycles to be executed
+     * @param   _startTime  . time when the first cycle should be executed (unixtime in seconds)
+     * @param   _interval  . time interval between each cycle (in seconds)
+     */
     function _createTimeAutomate(
         address _to,
         uint256 _amount,
@@ -398,8 +529,7 @@ contract AutoPay is AutomateTaskCreator {
         address _destinationContract,
         uint256 _cycles,
         uint256 _startTime,
-        uint256 _interval,
-        string memory _web3FunctionHash
+        uint256 _interval
     ) public {
         if (IERC20(_fromToken).allowance(msg.sender, address(this)) < _amount) {
             revert Allowance(IERC20(_fromToken).allowance(msg.sender, address(this)), _amount, _fromToken);
@@ -431,7 +561,7 @@ contract AutoPay is AutomateTaskCreator {
             _cycles,
             _startTime,
             _interval,
-            _web3FunctionHash,
+            _web3functionHashes[Option.TIME],
             _web3FunctionArgsHex
         );
 
@@ -469,6 +599,20 @@ contract AutoPay is AutomateTaskCreator {
             );
     }
 
+    /**
+     * @notice  . Function to create multiple scheduled time automates
+     * @dev     .
+     * @param   _to  . array of addresses of the user who is receiving the funds
+     * @param   _amount  . array of amounts of tokens to be sent
+     * @param   _fromToken  . array of addresses of the token to be sent
+     * @param   _toToken  . array of addresses of the token to be received
+     * @param   _toChain  . array of chainIds of the destination chain
+     * @param   _destinationDomain  . array of connext domains of the destination chain
+     * @param   _destinationContract  . array of addresses of the contract on the destination chain
+     * @param   _cycles  . array of number of cycles to be executed
+     * @param   _startTime  . array of times when the first cycle should be executed (unixtime in seconds)
+     * @param   _interval  . array of time intervals between each cycle (in seconds)
+     */
     function _createMultipleTimeAutomate(
         address[] calldata _to,
         uint256[] calldata _amount,
@@ -479,9 +623,9 @@ contract AutoPay is AutomateTaskCreator {
         address[] calldata _destinationContract,
         uint256[] calldata _cycles,
         uint256[] calldata _startTime,
-        uint256[] calldata _interval,
-        string memory _web3FunctionHash
-    ) external {
+        uint256[] calldata _interval
+    )
+     external {
         for (uint256 i = 0; i < _to.length; i++) {
             if (IERC20(_fromToken[i]).allowance(msg.sender, address(this)) < _amount[i]) {
                 revert Allowance(IERC20(_fromToken[i]).allowance(msg.sender, address(this)), _amount[i], _fromToken[i]);
@@ -496,12 +640,29 @@ contract AutoPay is AutomateTaskCreator {
                 _destinationContract[i],
                 _cycles[i],
                 _startTime[i],
-                _interval[i],
-                _web3FunctionHash
+                _interval[i]
             );
         }
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _from  .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @param   _relayerFeeInTransactingAsset  .
+     * @param   _swapper  .
+     * @param   _swapData  .
+     */
     function _timeAutomateCron(
         address _from,
         address _to,
@@ -549,7 +710,7 @@ contract AutoPay is AutomateTaskCreator {
             );
         } else {
             // TransferHelper.safeTransfer(_fromToken, _to, amountOut);
-             IERC20(_fromToken).transfer(_to, amountOut);
+            IERC20(_fromToken).transfer(_to, amountOut);
         }
 
         bytes32 _jobId = _getAutomateJobId(
@@ -567,30 +728,43 @@ contract AutoPay is AutomateTaskCreator {
         );
 
         user storage userInfo = _createdJobs[_jobId];
+        require(userInfo._user != address(0), "NO JOB Found");
         userInfo._executedCycles++;
 
         if (userInfo._executedCycles == userInfo._totalCycles) {
             _cancelJob(_jobId);
         }
 
-        // Check the remaining gas again
         uint256 gasRemaining2 = gasleft();
-        // Calculate the gas consumed by the operations
+
         uint256 gasConsumed = (gasRemaining - gasRemaining2) * tx.gasprice;
-        gasConsumed = gasConsumed + (gasConsumed * 25/100);
+        gasConsumed = gasConsumed + (gasConsumed * 25 / 100);
         treasury.useFunds(ETH, gasConsumed, _from);
 
-        emit ExecutedSourceChain(
-            _jobId,
-            _from,
-            userInfo._executedCycles,
-            gasConsumed,
-            amountOut
-        );
+        emit ExecutedSourceChain(_jobId, _from, userInfo._executedCycles, gasConsumed, amountOut);
     }
 
     // ============================= CONDITIONAL TIME AUTOMATE ===============================
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _from  .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _price  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _tokenA  .
+     * @param   _tokenB  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @return  bytes  .
+     */
     function _getWeb3FunctionHash(
         address _from,
         address _to,
@@ -638,6 +812,28 @@ contract AutoPay is AutomateTaskCreator {
         0 = infinite
         any number = number of cycles
     */
+
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _from  .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _price  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _tokenA  .
+     * @param   _tokenB  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @param   _web3FunctionHash  .
+     * @param   _web3FunctionArgsHex  .
+     * @return  bytes32  .
+     */
     function _gelatoConditionalJobCreator(
         address _from,
         address _to,
@@ -689,6 +885,24 @@ contract AutoPay is AutomateTaskCreator {
         return id;
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _price  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _tokenA  .
+     * @param   _tokenB  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @param   _web3FunctionHash  .
+     */
     function _createConditionalAutomate(
         address _to,
         uint256 _amount,
@@ -781,6 +995,24 @@ contract AutoPay is AutomateTaskCreator {
             );
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _price  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _tokenA  .
+     * @param   _tokenB  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @param   _web3FunctionHash  .
+     */
     function _createMultipleConditionalAutomate(
         address[] calldata _to,
         uint256[] calldata _amount,
@@ -820,6 +1052,25 @@ contract AutoPay is AutomateTaskCreator {
         }
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _from  .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _price  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @param   _relayerFeeInTransactingAsset  .
+     * @param   _swapper  .
+     * @param   _swapData  .
+     */
     function _conditionalAutomateCron(
         address _from,
         address _to,
@@ -883,41 +1134,60 @@ contract AutoPay is AutomateTaskCreator {
         );
 
         user storage userInfo = _createdJobs[_jobId];
+        require(userInfo._user != address(0), "NO JOB Found");
         userInfo._executedCycles++;
 
         if (userInfo._executedCycles == userInfo._totalCycles) {
             _cancelJob(_jobId);
         }
 
-         // Check the remaining gas again
+        // Check the remaining gas again
         uint256 gasRemaining2 = gasleft();
         // Calculate the gas consumed by the operations
         uint256 gasConsumed = (gasRemaining - gasRemaining2) * tx.gasprice;
-        gasConsumed = gasConsumed + (gasConsumed * 25/100);
+        gasConsumed = gasConsumed + (gasConsumed * 25 / 100);
         treasury.useFunds(ETH, gasConsumed, _from);
 
-        emit ExecutedSourceChain(
-            _jobId,
-            _from,
-            userInfo._executedCycles,
-            gasConsumed,
-            amountOut
-        );
-
-        // (uint256 fee, address feeToken) = _getFeeDetails();
-        // ITreasury(treasury).depositFunds{value: fee}(msg.sender, feeToken, fee);
+        emit ExecutedSourceChain(_jobId, _from, userInfo._executedCycles, gasConsumed, amountOut);
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     */
     function _transferGas() external payable {
         (uint256 fee, address feeToken) = _getFeeDetails();
 
         treasury.depositFunds{value: msg.value}(msg.sender, feeToken, fee);
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _address  .
+     * @return  uint256  .
+     */
     function getBalanceOfToken(address _address) public view returns (uint256) {
         return IERC20(_address).balanceOf(address(this));
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _from  .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _price  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @return  bytes32  .
+     */
     function _getConditionalJobId(
         address _from,
         address _to,
@@ -950,6 +1220,22 @@ contract AutoPay is AutomateTaskCreator {
         );
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _from  .
+     * @param   _to  .
+     * @param   _amount  .
+     * @param   _fromToken  .
+     * @param   _toToken  .
+     * @param   _toChain  .
+     * @param   _destinationDomain  .
+     * @param   _destinationContract  .
+     * @param   _cycles  .
+     * @param   _startTime  .
+     * @param   _interval  .
+     * @return  bytes32  .
+     */
     function _getAutomateJobId(
         address _from,
         address _to,
@@ -980,13 +1266,25 @@ contract AutoPay is AutomateTaskCreator {
         );
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _treasury  .
+     */
     function updateTreasury(address _treasury) external onlyOwner {
         treasury = ITreasury(_treasury);
     }
 
-    // function updateWeb3functionHashes(Option[] calldata _types, string[] calldata _hashes) external onlyOwner {
-    //     for (uint256 i = 0; i < _types.length; i++) {
-    //         web3functionHashes[_types[i]] = _hashes[i];
-    //     }
-    // }
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _types  .
+     * @param   _hashes  .
+     */
+    function updateWeb3functionHashes(Option[] calldata _types, string[] calldata _hashes) external onlyOwner {
+        for (uint256 i = 0; i < _types.length; i++) {
+            _web3functionHashes[_types[i]] = _hashes[i];
+        }
+    }
+
 }

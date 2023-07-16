@@ -128,15 +128,11 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
         address _user
     ) external onlyWhitelistedServices {
         address _owner = owner();
-        require(_amount > userTokenBalance[_owner][_token], "useFunds: ETH transfer failed");
+        require(_amount <= userTokenBalance[_user][_token], "useFunds: ETH transfer failed");
 
-        userTokenBalance[_user][_token] =
-            userTokenBalance[_user][_token] -
-            _amount;
+        userTokenBalance[_user][_token] -= _amount;
         
-        userTokenBalance[_owner][_token] =
-            userTokenBalance[_owner][_token] -
-            _amount;
+        userTokenBalance[_owner][_token] += _amount;
 
         if (userTokenBalance[_user][_token] == 0)
             _tokenCredits[_user].remove(_token);
