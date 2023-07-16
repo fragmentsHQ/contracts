@@ -3,6 +3,7 @@ require("dotenv").config();
 require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 require('solidity-docgen');
+require("hardhat-gas-reporter");
 // require("@nomiclabs/hardhat-ethers");
 // require("@nomiclabs/hardhat-waffle");
 
@@ -57,5 +58,10 @@ module.exports = {
       polygonMumbai: process.env.POLYGONSCAN_API_KEY
     }
   },
-  docgen: {}
+  docgen: {},
+  gasReporter : {
+    enabled: true,
+    outputFile: 'gas-report.txt',
+    currency: 'USD',
+  }
 };

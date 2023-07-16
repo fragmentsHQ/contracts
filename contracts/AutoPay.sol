@@ -158,11 +158,11 @@ contract AutoPay is AutomateTaskCreator {
 
 
 /*    
-  __                  _   _                 
- / _|_   _ _ __   ___| |_(_) ___  _ __  ___ 
-| |_| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
-|  _| |_| | | | | (__| |_| | (_) | | | \__ \
-|_|  \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+         __                  _   _                 
+        / _|_   _ _ __   ___| |_(_) ___  _ __  ___ 
+        | |_| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+        |  _| |_| | | | | (__| |_| | (_) | | | \__ \
+        |_|  \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 */ 
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -626,7 +626,9 @@ contract AutoPay is AutomateTaskCreator {
         uint256[] calldata _interval
     )
      external {
-        for (uint256 i = 0; i < _to.length; i++) {
+        uint256 len = _to.length;
+
+        for (uint256 i = 0; i < len; ++i) {
             if (IERC20(_fromToken[i]).allowance(msg.sender, address(this)) < _amount[i]) {
                 revert Allowance(IERC20(_fromToken[i]).allowance(msg.sender, address(this)), _amount[i], _fromToken[i]);
             }
@@ -1029,7 +1031,9 @@ contract AutoPay is AutomateTaskCreator {
         uint256[] calldata _interval,
         string memory _web3FunctionHash
     ) external {
-        for (uint256 i = 0; i < _to.length; i++) {
+        uint256 len = _to.length;
+
+        for (uint256 i = 0; i < len; ++i) {
             if (IERC20(_fromToken[i]).allowance(msg.sender, address(this)) < _amount[i]) {
                 revert Allowance(IERC20(_fromToken[i]).allowance(msg.sender, address(this)), _amount[i], _fromToken[i]);
             }

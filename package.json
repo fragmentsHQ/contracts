@@ -10,10 +10,10 @@
     "deploy:conditional": "npx hardhat run scripts/deployConditional.js",
     "deploy:autopay": "npx hardhat run scripts/deployAutopay.js",
     "deploy:treasury": "npx hardhat run scripts/deployTreasury.js",
-    "upgrade:autopay" : "npx hardhat run scripts/upgradeAutopay.js",
-    "upgrade:conditional" : "npx hardhat run scripts/upgradeConditional.js",
-    "upgrade:treasury" : "npx hardhat run scripts/upgradeTreasury.js",
-    "docgen" : "npx hardhat docgen"
+    "upgrade:autopay": "npx hardhat run scripts/upgradeAutopay.js",
+    "upgrade:conditional": "npx hardhat run scripts/upgradeConditional.js",
+    "upgrade:treasury": "npx hardhat run scripts/upgradeTreasury.js",
+    "docgen": "npx hardhat docgen"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
@@ -28,7 +28,7 @@
     "@types/mocha": ">=9.1.0",
     "chai": "4.2.0",
     "hardhat": "2.12.6",
-    "hardhat-gas-reporter": "1.0.8",
+    "hardhat-gas-reporter": "^1.0.8",
     "solidity-coverage": "0.8.1",
     "typechain": "8.1.0"
   },
