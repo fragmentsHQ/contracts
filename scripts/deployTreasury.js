@@ -53,6 +53,32 @@ const deployMumbai = async () => {
 
 
 
+const deployPolygon = async () => {
+  const Treasury = await hre.ethers.getContractFactory("Treasury");
+  const treasury = await hre.upgrades.deployProxy(Treasury,
+    {
+      kind: 'uups'
+    }
+  );
+
+  await treasury.deployed();
+
+  console.log(
+    `Deployed to ${treasury.address}`
+  );
+
+
+  const currentImplAddress = await getImplementationAddress(hre.network.provider, treasury.address);
+
+  console.log('Implementation Contract Address:', currentImplAddress);
+
+  await hre.run("verify:verify", {
+    address: currentImplAddress,
+  });
+}
+
+
+
 async function main() {
   const chainId = hre.network.config.chainId;
   console.log(chainId);
@@ -61,8 +87,8 @@ async function main() {
     deployGoerli();
   } else if (chainId == 80001) {
     deployMumbai();
-  } else {
-    deployGoerli();
+  } else if (chainId == 137) {
+    deployPolygon();
   }
 
 }

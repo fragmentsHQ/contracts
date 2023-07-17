@@ -28,34 +28,35 @@ module.exports = {
     goerli: {
       chainId: 5,
       url: process.env.ALCHEMY_GOERLI_API_URL,
-      accounts: [process.env.PRIVATE_KEY]
+      accounts: [process.env.FRAGMENTS_KEY]
     },
     mumbai: {
       chainId: 80001,
       url: process.env.ALCHEMY_MUMBAI_API_URL,
-      accounts: [process.env.PRIVATE_KEY]
+      accounts: [process.env.FRAGMENTS_KEY]
     },
     zkEVM : {
       chainId: 1442,
       url: "https://rpc.public.zkevm-test.net",
-      accounts: [process.env.PRIVATE_KEY]
+      accounts: [process.env.FRAGMENTS_KEY]
 
     },
-    // gnosis: {
-    //   chainId: 100,
-    //   url: process.env.ALCHEMY_GNOSIS_API_URL,
-    //   accounts: [process.env.PRIVATE_KEY]
-    // },
-    // polygon: {
-    //   chainId: 137,
-    //   url: process.env.ALCHEMY_POLYGON_API_URL,
-    //   accounts: [process.env.PRIVATE_KEY]
-    // },
+    gnosis: {
+      chainId: 100,
+      url: process.env.ALCHEMY_GNOSIS_API_URL,
+      accounts: [process.env.FRAGMENTS_KEY]
+    },
+    polygon: {
+      chainId: 137,
+      url: process.env.ALCHEMY_POLYGON_API_URL,
+      accounts: [process.env.FRAGMENTS_KEY]
+    },
   },
   etherscan: {
     apiKey: {
       goerli: process.env.ETHERSCAN_API_KEY,
-      polygonMumbai: process.env.POLYGONSCAN_API_KEY
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY,
+      polygon: process.env.POLYGONSCAN_API_KEY,
     }
   },
   docgen: {},

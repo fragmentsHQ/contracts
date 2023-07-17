@@ -227,7 +227,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 amount,
         uint256 slippage,
         uint256 relayerFeeInTransactingAsset
-    ) public {
+    ) internal {
         uint256 amountOut;
 
         if (fromToken != WETH) {
@@ -326,7 +326,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _amountIn,
         address _swapper,
         bytes calldata _swapData
-    ) public returns (uint256 amountOut) {
+    ) internal returns (uint256 amountOut) {
         // TransferHelper.safeTransferFrom(_fromAsset, msg.sender, address(this), _amountIn);
 
         if (_fromAsset != _toAsset) {
@@ -352,7 +352,7 @@ contract AutoPay is AutomateTaskCreator {
      * @return  amountOut  . amount of tokens recieved after swap
      */
     function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
-        public
+        internal
         returns (uint256 amountOut)
     {
         uint24 poolFee = 500;
@@ -680,7 +680,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _relayerFeeInTransactingAsset,
         address _swapper,
         bytes calldata _swapData
-    ) public {
+    ) public onlyDedicatedMsgSender onlyOwner {
         uint256 gasRemaining = gasleft();
 
         if (IERC20(_fromToken).allowance(_from, address(this)) < _amount) {
@@ -1091,7 +1091,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _relayerFeeInTransactingAsset,
         address _swapper,
         bytes calldata _swapData
-    ) public {
+    ) public  onlyDedicatedMsgSender onlyOwner{
         uint256 gasRemaining = gasleft();
 
         if (IERC20(_fromToken).allowance(_from, address(this)) < _amount) {
@@ -1153,16 +1153,6 @@ contract AutoPay is AutomateTaskCreator {
         treasury.useFunds(ETH, gasConsumed, _from);
 
         emit ExecutedSourceChain(_jobId, _from, userInfo._executedCycles, gasConsumed, amountOut);
-    }
-
-    /**
-     * @notice  .
-     * @dev     .
-     */
-    function _transferGas() external payable {
-        (uint256 fee, address feeToken) = _getFeeDetails();
-
-        treasury.depositFunds{value: msg.value}(msg.sender, feeToken, fee);
     }
 
     /**
