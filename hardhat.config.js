@@ -21,7 +21,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: process.env.ALCHEMY_GOERLI_API_URL
+        url: process.env.ALCHEMY_MUMBAI_API_URL
       }
     },
     goerli: {
