@@ -1,0 +1,41 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "AssetLogic",
+  "sourceName": "@connext/smart-contracts/contracts/core/connext/libraries/AssetLogic.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "AssetLogic__getConfig_notRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AssetLogic__getTokenIndexFromStableSwapPool_notExist",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AssetLogic__handleIncomingAsset_feeOnTransferNotSupported",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AssetLogic__handleIncomingAsset_nativeAssetNotSupported",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AssetLogic__handleOutgoingAsset_notNative",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AssetLogic__swapAsset_externalStableSwapPoolDoesNotExist",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea264697066735822122044fdc9134bdc4fc0f6ddc745625f7a39f25f34ee4dc8893308a1e20f3902627564736f6c63430008110033",
+  "deployedBytecode": "0x600080fdfea264697066735822122044fdc9134bdc4fc0f6ddc745625f7a39f25f34ee4dc8893308a1e20f3902627564736f6c63430008110033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

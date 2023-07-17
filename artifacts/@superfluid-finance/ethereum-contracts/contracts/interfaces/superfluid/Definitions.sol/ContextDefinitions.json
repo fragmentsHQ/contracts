@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "ContextDefinitions",
+  "sourceName": "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/Definitions.sol",
+  "abi": [],
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea26469706673582212207847746b4ca6252e0addb779242a44f2e8f9f550d3ca4a7b92efc58db6fa48ab64736f6c63430008110033",
+  "deployedBytecode": "0x600080fdfea26469706673582212207847746b4ca6252e0addb779242a44f2e8f9f550d3ca4a7b92efc58db6fa48ab64736f6c63430008110033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

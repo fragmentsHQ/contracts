@@ -1,0 +1,91 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "TypedMemView",
+  "sourceName": "@connext/smart-contracts/contracts/shared/libraries/TypedMemView.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "actual",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expected",
+          "type": "uint256"
+        }
+      ],
+      "name": "TypedMemView__assertType_typeAssertionFailed",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TypedMemView__assertValid_validityAssertionFailed",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TypedMemView__index_indexMoreThan32Bytes",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "loc",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "len",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "slice",
+          "type": "uint256"
+        }
+      ],
+      "name": "TypedMemView__index_overrun",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TypedMemView__unsafeCopyTo_identityOOG",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TypedMemView__unsafeCopyTo_invalidPointer",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TypedMemView__unsafeCopyTo_nullPointer",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NULL",
+      "outputs": [
+        {
+          "internalType": "bytes29",
+          "name": "",
+          "type": "bytes29"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608080604052346018576078908161001e823930815050f35b600080fdfe6080806040526004361015601257600080fd5b60003560e01c63f26be3fc14602657600080fd5b6000366003190112603d5762ffffff198152602090f35b600080fdfea2646970667358221220813cbc664cc96c89b6bc8b3cead7981722ad606193bdda8a1418379ef034a5b264736f6c63430008110033",
+  "deployedBytecode": "0x6080806040526004361015601257600080fd5b60003560e01c63f26be3fc14602657600080fd5b6000366003190112603d5762ffffff198152602090f35b600080fdfea2646970667358221220813cbc664cc96c89b6bc8b3cead7981722ad606193bdda8a1418379ef034a5b264736f6c63430008110033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

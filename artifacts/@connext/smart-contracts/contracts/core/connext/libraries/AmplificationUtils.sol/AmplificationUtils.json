@@ -1,0 +1,61 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "AmplificationUtils",
+  "sourceName": "@connext/smart-contracts/contracts/core/connext/libraries/AmplificationUtils.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "oldA",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newA",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "initialTime",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "futureTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "RampA",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "currentA",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "time",
+          "type": "uint256"
+        }
+      ],
+      "name": "StopRampA",
+      "type": "event"
+    }
+  ],
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea2646970667358221220bcc37df7b62cdc8374dc2fe9cc5305c0563d2b68c7397953b2dfea332fe81c0064736f6c63430008110033",
+  "deployedBytecode": "0x600080fdfea2646970667358221220bcc37df7b62cdc8374dc2fe9cc5305c0563d2b68c7397953b2dfea332fe81c0064736f6c63430008110033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
