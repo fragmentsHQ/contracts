@@ -3,6 +3,9 @@ pragma solidity 0.8.17;
 
 import "hardhat/console.sol";
 
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IConnext} from "@connext/smart-contracts/contracts/core/connext/interfaces/IConnext.sol";
 import {IXReceiver} from "@connext/smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol";
@@ -17,6 +20,8 @@ import {
 import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 
 import "./interfaces/AutomateTaskCreator.sol";
+import "./interfaces/WETH9_.sol";
+import "./interfaces/Treasury.sol";
 import {IDestinationPool} from "./interfaces/IDestinationPool.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -42,18 +47,65 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
 
     fallback() external payable {}
 
-    /// @dev Emitted when flow message is sent across the bridge.
-    /// @param flowRate Flow Rate, unadjusted to the pool.
-    event FlowStartMessage(address indexed sender, address indexed receiver, int96 flowRate, uint256 startTime);
-    event FlowTopupMessage(
-        address indexed sender, address indexed receiver, int96 newFlowRate, uint256 topupTime, uint256 endTime
-    );
-    event FlowEndMessage(address indexed sender, address indexed receiver, int96 flowRate);
+    IConnext public connext;
+    ISwapRouter public swapRouter;
+    ISuperfluid public host;
+    IConstantFlowAgreementV1 public cfa;
+    ITreasury public treasury;
+    mapping(StreamOptions => string) public _web3functionHashes;
+    address public WETH;
 
-    event XStreamFlowTrigger(
+    struct user {
+        address _user;
+        int96 _flowRate;
+        uint256 _startTime;
+        uint256 _endTime;
+        address _superToken;
+        address _token;
+        bytes32 _gelatoTaskID;
+    }
+
+    mapping(bytes32 => user) public _createdXStreams;
+    mapping(address => bool) public _isTokenAllowed;
+
+    enum StreamOptions {
+        START,
+        TOPUP,
+        END
+    }
+
+    struct XStreamData {
+        bytes32 _xStreamId;
+        uint256 _streamActionType;
+        address _sender;
+        address _receiver;
+        int96 _flowRate;
+        uint256 _startTime;
+        address _superToken;
+        address _asset;
+        uint256 _amount;
+    }
+
+    event FlowStartMessage(
+        bytes32 indexed _xStreamId, address indexed sender, address indexed receiver, int96 flowRate, uint256 startTime
+    );
+
+    event FlowTopupMessage(
+        bytes32 indexed _xStreamId,
         address indexed sender,
         address indexed receiver,
-        address indexed selectedToken,
+        int96 newFlowRate,
+        uint256 topupTime,
+        uint256 endTime
+    );
+
+    event FlowEndMessage(bytes32 indexed _xStreamId, address indexed sender, address indexed receiver, int96 flowRate);
+
+    event XStreamFlowTrigger(
+        bytes32 indexed _xStreamId,
+        address indexed sender,
+        address indexed receiver,
+        address selectedToken,
         int96 flowRate,
         uint256 amount,
         uint256 streamStatus,
@@ -63,28 +115,41 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         uint32 destinationDomain
     );
 
-    enum StreamOptions {
-        START,
-        TOPUP,
-        END
-    }
+    event UpgradeToken(address indexed baseToken, uint256 amount);
 
-    /// @dev Emitted when rebalance message is sent across the bridge.
-    /// @param amount Amount rebalanced (sent).
-    event RebalanceMessageSent(uint256 amount);
+    event StreamStart(
+        bytes32 indexed _xStreamId, address indexed sender, address receiver, int96 flowRate, uint256 startTime
+    );
 
-    modifier isCallbackValid(address _agreementClass, ISuperToken _token) {
-        if (msg.sender != address(host)) revert Unauthorized();
-        if (_agreementClass != address(cfa)) revert InvalidAgreement();
-        if (_token != superToken) revert InvalidToken();
+    event StreamUpdate(
+        bytes32 indexed _xStreamId, address indexed sender, address indexed receiver, int96 flowRate, uint256 startTime
+    );
+
+    event StreamDelete(bytes32 indexed _xStreamId, address indexed sender, address indexed receiver);
+
+    event XReceiveData(
+        bytes32 indexed _xStreamId,
+        address indexed originSender,
+        uint32 origin,
+        address asset,
+        uint256 amount,
+        bytes32 transferId,
+        uint256 receiveTimestamp,
+        address senderAccount,
+        address receiverAccount,
+        int256 flowRate
+    );
+
+    modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source) {
+        require(
+            _origin == _originDomain && _originSender == _source && msg.sender == address(connext),
+            "Expected original caller to be source contract on origin domain and this to be called by Connext"
+        );
         _;
     }
 
-    IConnext public  connext;
-    ISuperfluid public  host;
-    IConstantFlowAgreementV1 public  cfa;
-    ISuperToken public  superToken;
-    IERC20 public erc20Token;
+    error Allowance(uint256 allowance, uint256 amount, address token);
+    error AmountLessThanRelayer(uint256 _amount, uint256 _relayerFeeInTransactingAsset);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -93,66 +158,211 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    function initialize(
-        address payable _ops,
-        address _host,
-        address _cfa,
-        address _connext,
-        address _superToken,
-        address _erc20Token
-    ) public initializer  {
-
+    function initialize(address payable _ops, address _host, address _cfa, address _connext) public initializer {
         AutomateTaskCreator.ATC__initialize(_ops, msg.sender);
 
         host = ISuperfluid(_host);
         cfa = IConstantFlowAgreementV1(_cfa);
-        superToken = ISuperToken(_superToken);
         connext = IConnext(_connext);
-        erc20Token = IERC20(_erc20Token);
-
-        IERC20(superToken.getUnderlyingToken()).approve(address(connext), type(uint256).max);
-
-        console.log("Address performing the approval", msg.sender);
 
         __Ownable_init();
         __UUPSUpgradeable_init();
     }
 
-    /// @dev Rebalances pools. This sends funds over the bridge to the destination.
-    function rebalance(uint32 destinationDomain, address destinationContract, uint256 relayerFeeInTransactingAsset)
-        external
-    {
-        _sendRebalanceMessage(destinationDomain, destinationContract, relayerFeeInTransactingAsset);
-    }
+    function xTransfer(
+        bytes32 _xStreamId,
+        address _from,
+        address _receiver,
+        address _destinationContract,
+        uint32 _destinationDomain,
+        address _bridgingToken,
+        address _destinationSuperToken,
+        uint256 _amount,
+        uint256 _slippage,
+        uint256 _relayerFeeInTransactingAsset,
+        uint256 _streamActionType,
+        int96 _flowRate
+    ) public {
+        uint256 amountOut;
 
+        if (_bridgingToken != WETH) {
+            amountOut = swapExactInputSingle(_bridgingToken, WETH, _amount);
+        }
 
-    function xTransfer(address _recipient, uint32 _originDomain, uint256 _amount, uint256 relayerFeeInTransactingAsset)
-        internal
-    {
-        // This contract approves transfer to Connext
-        erc20Token.approve(address(connext), _amount);
+        if (_bridgingToken != address(0)) {
+            if (IERC20(WETH).allowance(address(this), address(connext)) < amountOut + _relayerFeeInTransactingAsset) {
+                TransferHelper.safeApprove(WETH, address(connext), amountOut + _relayerFeeInTransactingAsset);
+            }
+        }
 
-        uint256 _slippage = 300;
-        uint256 remainingBalance = _amount - superToken.balanceOf(address(this));
+        if (amountOut < _relayerFeeInTransactingAsset) {
+            revert AmountLessThanRelayer(_amount, _relayerFeeInTransactingAsset);
+        }
+
+        bytes memory callData = abi.encode(
+            _xStreamId,
+            _streamActionType,
+            _from,
+            _receiver,
+            _flowRate,
+            block.timestamp,
+            _relayerFeeInTransactingAsset,
+            _destinationSuperToken
+        );
 
         connext.xcall(
-            _originDomain, // _destination: Domain ID of the destination chain
-            _recipient, // _to: address receiving the funds on the destination
-            address(erc20Token), // _asset: address of the token contract
-            msg.sender, // _delegate: address that can revert or forceLocal on destination
-            remainingBalance - relayerFeeInTransactingAsset, // _amount: amount of tokens to transfer
-            _slippage, // _slippage: the maximum amount of slippage the user will accept in BPS
-            "" // _callData: empty because we're only sending funds
+            _destinationDomain,
+            _destinationContract,
+            _bridgingToken,
+            _from,
+            _amount - _relayerFeeInTransactingAsset,
+            _slippage,
+            callData,
+            _relayerFeeInTransactingAsset
         );
     }
 
-    function deleteStream(address account) external {
-        bytes memory _callData = abi.encodeCall(cfa.deleteFlow, (superToken, address(this), account, new bytes(0)));
+    function xTransferFunds(
+        address _recipient,
+        uint32 _originDomain,
+        uint256 _amount,
+        uint256 _relayerFeeInTransactingAsset,
+        address _bridgingToken,
+        address _destinationSuperToken
+    ) internal {
+        // This contract approves transfer to Connext
+        uint256 amountOut;
 
-        host.callAgreement(cfa, _callData, new bytes(0));
+        if (_bridgingToken != WETH) {
+            amountOut = swapExactInputSingle(_bridgingToken, WETH, _amount);
+        }
 
-        (uint256 fee, address feeToken) = _getFeeDetails();
-        _transfer(fee, feeToken);
+        if (_bridgingToken != address(0)) {
+            if (IERC20(WETH).allowance(address(this), address(connext)) < amountOut + _relayerFeeInTransactingAsset) {
+                TransferHelper.safeApprove(WETH, address(connext), amountOut + _relayerFeeInTransactingAsset);
+            }
+        }
+
+        if (amountOut < _relayerFeeInTransactingAsset) {
+            revert AmountLessThanRelayer(_amount, _relayerFeeInTransactingAsset);
+        }
+
+        uint256 _slippage = 500;
+        uint256 remainingBalance = _amount - ISuperToken(_destinationSuperToken).balanceOf(address(this));
+
+        connext.xcall(
+            _originDomain,
+            _recipient,
+            _bridgingToken,
+            msg.sender,
+            remainingBalance - _relayerFeeInTransactingAsset,
+            _slippage,
+            ""
+        );
+    }
+
+    function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
+        public
+        returns (uint256 amountOut)
+    {
+        uint24 poolFee = 500;
+        TransferHelper.safeApprove(_fromToken, address(swapRouter), amountIn);
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: _fromToken,
+            tokenOut: _toToken,
+            fee: poolFee,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        });
+
+        amountOut = swapRouter.exactInputSingle(params);
+        return amountOut;
+    }
+
+    function _getWeb3FunctionHash(
+        address _from,
+        address _to,
+        uint256 _amount,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 _destinationDomain,
+        address _destinationContract,
+        uint256 _cycles,
+        uint256 _startTime,
+        uint256 _interval
+    ) public view returns (bytes memory) {
+        string memory __amount = Strings.toString(_amount);
+        return (
+            abi.encode(
+                _from.toHexString(),
+                _to.toHexString(),
+                __amount,
+                _fromToken.toHexString(),
+                _toToken.toHexString(),
+                block.chainid,
+                _toChain,
+                connext.domain(),
+                _destinationDomain,
+                address(this).toHexString(),
+                _destinationContract.toHexString(),
+                _cycles,
+                _startTime,
+                _interval
+            )
+        );
+    }
+
+    function _gelatoTimeJobCreator(
+        address _from,
+        address _to,
+        uint256 _amount,
+        address _fromToken,
+        address _toToken,
+        uint256 _toChain,
+        uint32 _destinationDomain,
+        address _destinationContract,
+        uint256 _cycles,
+        uint256 _startTime,
+        uint256 _interval,
+        bytes memory _web3FunctionArgsHex
+    ) internal returns (bytes32) {
+        bytes memory execData = abi.encodeWithSelector(
+            this._createXStream.selector,
+            _from,
+            _to,
+            _amount,
+            _fromToken,
+            _toToken,
+            _toChain,
+            _destinationDomain,
+            _destinationContract,
+            _cycles,
+            _startTime,
+            _interval,
+            0,
+            address(0),
+            bytes("")
+        );
+
+        string memory _web3FunctionHash = _web3functionHashes[StreamOptions.START];
+
+        ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
+        moduleData.modules[0] = Module.TIME;
+        moduleData.modules[1] = Module.PROXY;
+        moduleData.modules[2] = Module.WEB3_FUNCTION;
+
+        moduleData.args[0] = _timeModuleArg(_startTime, _interval);
+        moduleData.args[1] = _proxyModuleArg();
+        moduleData.args[2] = _web3FunctionModuleArg(_web3FunctionHash, _web3FunctionArgsHex);
+
+        bytes32 id = _createTask(address(this), execData, moduleData, address(0));
+
+        return id;
     }
 
     function createTask(address _user, uint256 _interval, uint256 _startTime) internal returns (bytes32) {
@@ -172,127 +382,114 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         return id;
     }
 
+    function deleteStream(address account, address _superToken) external {
+        // user memory _userInfo = _createdXStreams[_jobId];
+        // require(_userInfo._user != address(0), "No JOB Found");
+
+        // delete _createdXStreams[_jobId];
+
+        bytes memory _callData =
+            abi.encodeCall(cfa.deleteFlow, (ISuperToken(_superToken), address(this), account, new bytes(0)));
+
+        host.callAgreement(cfa, _callData, new bytes(0));
+
+        (uint256 fee, address feeToken) = _getFeeDetails();
+        _transfer(fee, feeToken);
+    }
+
     // for streamActionType: 1 -> start stream, 2 -> Topup stream, 3 -> delete stream
-    function _sendFlowMessage(
+    function _createXStream(
         uint256 _streamActionType,
         address _receiver,
         int96 _flowRate,
-        uint256 relayerFeeInTransactingAsset,
-        uint256 slippage,
-        uint256 cost,
-        address bridgingToken,
-        address destinationContract,
-        uint32 destinationDomain
+        uint256 _relayerFeeInTransactingAsset,
+        uint256 _slippage,
+        uint256 _amount,
+        address _bridgingToken,
+        address _destinationSuperToken,
+        address _destinationContract,
+        uint32 _destinationDomain
     ) public {
-        if (bridgingToken == address(superToken)) {
-            // if user is sending Super Tokens
-            ISuperToken(superToken).approve(address(this), type(uint256).max);
-            superToken.transferFrom(msg.sender, address(this), cost); // here the sender is my wallet account, cost is the amount of TEST or TESTx tokens
-                // supertokens won't be bridged, just the callData
-        } else if (bridgingToken == address(erc20Token)) {
-            // if user is sending ERC20 tokens
-            IERC20(superToken.getUnderlyingToken()).approve(address(this), type(uint256).max);
-            erc20Token.transferFrom(msg.sender, address(this), cost); // here the sender is my wallet account, cost is the amount of TEST or TESTx tokens
-            erc20Token.approve(address(connext), cost); // approve the connext contracts to handle OriginPool's liquidity
-        } else {
-            revert("Send the correct token to bridge");
+        if (IERC20(_bridgingToken).allowance(msg.sender, address(this)) < _amount) {
+            revert Allowance(IERC20(_bridgingToken).allowance(msg.sender, address(this)), _amount, _bridgingToken);
         }
 
-        bytes memory callData = abi.encode(
-            _streamActionType, msg.sender, _receiver, _flowRate, block.timestamp, relayerFeeInTransactingAsset
-        );
+        // IERC20(superToken.getUnderlyingToken()).approve(address(this), type(uint256).max);
+        IERC20(_bridgingToken).transferFrom(msg.sender, address(this), _amount);
 
-        connext.xcall(
-            destinationDomain, // _destination: Domain ID of the destination chain
-            destinationContract, // _to: contract address receiving the funds on the destination chain
-            address(bridgingToken), // _asset: address of the token contract
-            msg.sender, // _delegate: address that can revert or forceLocal on destination
-            cost - relayerFeeInTransactingAsset, // _amount: amount of tokens to transfer, // 0 if just sending a message
-            slippage, // _slippage: the maximum amount of slippage the user will accept in BPS
-            callData, // _callData
-            relayerFeeInTransactingAsset //relayerFeeInTransactingAsset
-        );
-
-        emit XStreamFlowTrigger(
+        bytes32 _xStreamId = _getXStreamJobId(
+            _streamActionType,
             msg.sender,
             _receiver,
-            address(bridgingToken),
             _flowRate,
-            cost,
+            block.timestamp,
+            _destinationSuperToken,
+            _bridgingToken,
+            _amount
+        );
+
+        xTransfer(
+            _xStreamId,
+            msg.sender,
+            _receiver,
+            _destinationContract,
+            _destinationDomain,
+            _bridgingToken,
+            _destinationSuperToken,
+            _amount,
+            _slippage,
+            _relayerFeeInTransactingAsset,
+            _streamActionType,
+            _flowRate
+        );
+
+        _createdXStreams[_xStreamId] =
+            user(msg.sender, _flowRate, block.timestamp, 0, _destinationSuperToken, _bridgingToken, 0);
+
+        emit XStreamFlowTrigger(
+            _xStreamId,
+            msg.sender,
+            _receiver,
+            _bridgingToken,
+            _flowRate,
+            _amount - _relayerFeeInTransactingAsset,
             1,
             block.timestamp,
             0,
-            relayerFeeInTransactingAsset,
-            destinationDomain
-            );
+            _relayerFeeInTransactingAsset,
+            _destinationDomain
+        );
     }
 
-    function _sendToManyFlowMessage(
-        address[] calldata receivers,
-        int96[] calldata flowRates,
-        uint96[] memory costs,
+    function _createMultipleXStream(
+        address[] calldata _receivers,
+        int96[] calldata _flowRates,
+        uint96[] memory _amounts,
         uint256 _streamActionType,
         uint256 _relayerFee,
-        uint256 slippage,
-        address bridgingToken,
-        address destinationContract,
-        uint32 destinationDomain
+        uint256 _slippage,
+        address _bridgingToken,
+        address _destinationSuperToken,
+        address _destinationContract,
+        uint32 _destinationDomain
     ) external {
-        for (uint256 i = 0; i < receivers.length; i++) {
-            _sendFlowMessage(
+        uint256 len = _receivers.length;
+
+        for (uint256 i = 0; i < len; ++i) {
+            _createXStream(
                 _streamActionType,
-                receivers[i],
-                flowRates[i],
+                _receivers[i],
+                _flowRates[i],
                 _relayerFee,
-                slippage,
-                costs[i],
-                bridgingToken,
-                destinationContract,
-                destinationDomain
+                _slippage,
+                _amounts[i],
+                _bridgingToken,
+                _destinationSuperToken,
+                _destinationContract,
+                _destinationDomain
             );
         }
     }
-
-    /// @dev Sends rebalance message with the full balance of this pool. No need to collect dust.
-    function _sendRebalanceMessage(
-        uint32 destinationDomain,
-        address destinationContract,
-        uint256 relayerFeeInTransactingAsset
-    ) internal {
-        uint256 balance = superToken.balanceOf(address(this));
-        // downgrade for sending across the bridge
-        superToken.downgrade(balance);
-        // encode call
-        bytes memory callData = abi.encodeWithSelector(IDestinationPool.receiveRebalanceMessage.selector);
-
-        connext.xcall(
-            destinationDomain, // _destination: Domain ID of the destination chain
-            destinationContract, // _to: contract address receiving the funds on the destination chain
-            superToken.getUnderlyingToken(), // _asset: address of the token contract
-            address(this), // _delegate: address that can revert or forceLocal on destination
-            balance - relayerFeeInTransactingAsset, // _amount: amount of tokens to transfer
-            300, // _slippage: the maximum amount of slippage the user will accept in BPS
-            callData // _callData
-        );
-        emit RebalanceMessageSent(balance);
-    }
-
-
-    event StreamStart(address indexed sender, address receiver, int96 flowRate, uint256 startTime);
-    event StreamUpdate(address indexed sender, address indexed receiver, int96 flowRate, uint256 startTime);
-
-    event StreamDelete(address indexed sender, address indexed receiver);
-    event XReceiveData(
-        address indexed originSender,
-        uint32 origin,
-        address asset,
-        uint256 amount,
-        bytes32 transferId,
-        uint256 receiveTimestamp,
-        address senderAccount,
-        address receiverAccount,
-        int256 flowRate
-    );
 
     // receive functions
 
@@ -301,12 +498,14 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         int96 _flowRate,
         uint256 _amount,
         uint256 _startTime,
-        uint256 _streamActionType
+        uint256 _streamActionType,
+        address _superToken
     ) internal {
         // if possible, upgrade all non-super tokens in the pool
         // uint256 balance = IERC20(token.getUnderlyingToken()).balanceOf(address(this));
 
         // if (balance > 0) token.upgrade(balance);
+        ISuperToken superToken = ISuperToken(_superToken);
 
         (, int96 existingFlowRate,,) = cfa.getFlow(superToken, address(this), _account);
 
@@ -333,17 +532,9 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         }
 
         host.callAgreement(cfa, callData, new bytes(0));
-    
     }
 
-    struct StreamInfo {
-        uint256 streamActionType; // 1 -> Start stream, 2 -> Topup stream, 3 -> Delete stream
-        address sender;
-        address receiver;
-        int96 flowRate;
-        uint256 startTime;
-        uint256 relayerFee;
-    }
+    // 1 -> Start stream, 2 -> Topup stream, 3 -> Delete stream
 
     function xReceive(
         bytes32 _transferId,
@@ -354,48 +545,85 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         bytes memory _callData
     ) external returns (bytes memory) {
         // Unpack the _callData
-        StreamInfo memory streamInfo;
+        //   (
+        //     uint256 _streamActionType,
+        //     address _sender,
+        //     address _receiver,
+        //     int96 _flowRate,
+        //     uint256 _startTime,
+        //     address _superToken,
+        //     address _asset,
+        //     uint256 _amount
+        // ) = abi.decode(
+        //     abi.encodePacked(_xStreamJobId), (uint256, address, address, int96, uint256, address, address, uint256)
+        // );
+
         (
-            streamInfo.streamActionType,
-            streamInfo.sender,
-            streamInfo.receiver,
-            streamInfo.flowRate,
-            streamInfo.startTime,
-            streamInfo.relayerFee
-        ) = abi.decode(_callData, (uint256, address, address, int96, uint256, uint256));
+            bytes32 _xStreamId,
+            uint256 _streamActionType,
+            address _sender,
+            address _receiver,
+            int96 _flowRate,
+            uint256 _startTime,
+            uint256 _relayerFee,
+            address _superToken
+        ) = abi.decode(_callData, (bytes32, uint256, address, address, int96, uint256, uint256, address));
 
         emit XReceiveData(
+            _xStreamId,
             _originSender,
             _origin,
             _asset,
             _amount,
             _transferId,
             block.timestamp,
-            streamInfo.sender,
-            streamInfo.receiver,
-            streamInfo.flowRate
-            );
-        approveSuperToken(address(_asset), _amount);
-        receiveFlowMessage(
-            streamInfo.receiver, streamInfo.flowRate, _amount, streamInfo.startTime, streamInfo.streamActionType
+            _sender,
+            _receiver,
+            _flowRate
         );
 
-        if (streamInfo.streamActionType == 1) {
-            emit StreamStart(msg.sender, streamInfo.receiver, streamInfo.flowRate, streamInfo.startTime);
-        } else if (streamInfo.streamActionType == 2) {
-            emit StreamUpdate(streamInfo.sender, streamInfo.receiver, streamInfo.flowRate, streamInfo.startTime);
-        } else {
-            xTransfer(streamInfo.sender, _origin, _amount, streamInfo.relayerFee);
+        approveSuperToken(address(_asset), _amount, _superToken);
+        receiveFlowMessage(_receiver, _flowRate, _amount, _startTime, _streamActionType, _superToken);
 
-            emit StreamDelete(streamInfo.sender, streamInfo.receiver);
+        if (_streamActionType == 1) {
+            emit StreamStart(_xStreamId, msg.sender, _receiver, _flowRate, _startTime);
+        } else if (_streamActionType == 2) {
+            emit StreamUpdate(_xStreamId, _sender, _receiver, _flowRate, _startTime);
+        } else {
+            xTransferFunds(_sender, _origin, _amount, _relayerFee, _asset, _superToken);
+
+            emit StreamDelete(_xStreamId, _sender, _receiver);
         }
     }
 
-    event UpgradeToken(address indexed baseToken, uint256 amount);
-
-    function approveSuperToken(address _asset, uint256 _amount) public {
-        IERC20(_asset).approve(address(superToken), _amount); // approving the superToken contract to upgrade TEST
-        ISuperToken(address(superToken)).upgrade(_amount);
+    function approveSuperToken(address _asset, uint256 _amount, address _superToken) public {
+        IERC20(_asset).approve(_superToken, _amount); // approving the superToken contract to upgrade TEST
+        ISuperToken(_superToken).upgrade(_amount);
         emit UpgradeToken(_asset, _amount);
+    }
+
+    function updateTreasury(address _treasury) external onlyOwner {
+        treasury = ITreasury(_treasury);
+    }
+
+    function updateWeb3functionHashes(StreamOptions[] calldata _types, string[] calldata _hashes) external onlyOwner {
+        for (uint256 i = 0; i < _types.length; i++) {
+            _web3functionHashes[_types[i]] = _hashes[i];
+        }
+    }
+
+    function _getXStreamJobId(
+        uint256 _streamActionType,
+        address _sender,
+        address _receiver,
+        int96 _flowRate,
+        uint256 _startTime,
+        address _superToken,
+        address _asset,
+        uint256 _amount
+    ) public pure returns (bytes32) {
+        return keccak256(
+            abi.encode(_streamActionType, _sender, _receiver, _flowRate, _startTime, _superToken, _asset, _amount)
+        );
     }
 }
