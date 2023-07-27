@@ -13,7 +13,11 @@
     "upgrade:autopay": "npx hardhat run scripts/upgradeAutopay.js",
     "upgrade:conditional": "npx hardhat run scripts/upgradeConditional.js",
     "upgrade:treasury": "npx hardhat run scripts/upgradeTreasury.js",
-    "docgen": "npx hardhat docgen"
+    "docgen": "npx hardhat docgen",
+    "lint": "solhint 'contracts/*.sol'",
+    "lint:fix": "solhint 'contracts/**/*.sol' --fix",
+    "format": "prettier --write .",
+    "toolbox": "docker run -it --rm -v $PWD:/src trailofbits/eth-security-toolbox",
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",

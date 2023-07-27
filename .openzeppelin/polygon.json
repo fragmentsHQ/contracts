@@ -209,12 +209,7 @@
           },
           "t_enum(Option)13352": {
             "label": "enum AutoPay.Option",
-            "members": [
-              "TIME",
-              "PRICE_FEED",
-              "CONTRACT_VARIBLES",
-              "GAS_PRICE"
-            ],
+            "members": ["TIME", "PRICE_FEED", "CONTRACT_VARIBLES", "GAS_PRICE"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_bytes32,t_struct(user)13361_storage)": {
