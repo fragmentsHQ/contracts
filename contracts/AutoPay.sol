@@ -439,6 +439,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _cycles,
         uint256 _startTime,
         uint256 _interval,
+        bool _isForwardPaying,
         string memory _web3FunctionHash,
         bytes memory _web3FunctionArgsHex
     ) internal returns (bytes32) {
@@ -456,6 +457,7 @@ contract AutoPay is AutomateTaskCreator {
             _startTime,
             _interval,
             0,
+            _isForwardPaying,
             address(0),
             bytes("")
         );
@@ -499,7 +501,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _cycles,
         uint256 _startTime,
         uint256 _interval,
-        bool isForwardPaying
+        bool _isForwardPaying
     ) public {
         if (IERC20(_fromToken).allowance(msg.sender, address(this)) < _amount) {
             revert Allowance(IERC20(_fromToken).allowance(msg.sender, address(this)), _amount, _fromToken);
@@ -517,7 +519,7 @@ contract AutoPay is AutomateTaskCreator {
             _cycles,
             _startTime,
             _interval,
-            isForwardPaying
+            _isForwardPaying
         );
 
         bytes32 _id = _gelatoTimeJobCreator(
@@ -532,6 +534,7 @@ contract AutoPay is AutomateTaskCreator {
             _cycles,
             _startTime,
             _interval,
+            _isForwardPaying,
             _web3functionHashes[Option.TIME],
             _web3FunctionArgsHex
         );
@@ -566,7 +569,7 @@ contract AutoPay is AutomateTaskCreator {
             _cycles,
             _startTime,
             _interval,
-            isForwardPaying,
+            _isForwardPaying,
             Option.TIME
         );
     }
