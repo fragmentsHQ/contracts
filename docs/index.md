@@ -72,7 +72,7 @@ struct user {
 }
 ```
 
-### _createdJobs
+### \_createdJobs
 
 ```solidity
 mapping(bytes32 => struct AutoPay.user) _createdJobs
@@ -102,18 +102,18 @@ function initialize(contract IConnext _connext, contract ISwapRouter _swapRouter
 contract ITreasury treasury
 ```
 
-### _authorizeUpgrade
+### \_authorizeUpgrade
 
 ```solidity
 function _authorizeUpgrade(address newImplementation) internal
 ```
 
-_Function that should revert when `msg.sender` is not authorized to upgrade the contract. Called by
+\_Function that should revert when `msg.sender` is not authorized to upgrade the contract. Called by
 {upgradeTo} and {upgradeToAndCall}.
 
 Normally, this function will use an xref:access.adoc[access control] modifier such as {Ownable-onlyOwner}.
 
-```solidity
+````solidity
 function _authorizeUpgrade(address) internal override onlyOwner {}
 ```_
 
@@ -121,7 +121,7 @@ function _authorizeUpgrade(address) internal override onlyOwner {}
 
 ```solidity
 modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source)
-```
+````
 
 ### JobCreated
 
@@ -177,7 +177,7 @@ function xReceive(bytes32 _transferId, uint256 _amount, address _asset, address 
 function directSwapperCall(address _swapper, bytes swapData) public payable returns (uint256 amountOut)
 ```
 
-### _setupAndSwap
+### \_setupAndSwap
 
 ```solidity
 function _setupAndSwap(address _fromAsset, address _toAsset, uint256 _amountIn, address _swapper, bytes _swapData) internal returns (uint256 amountOut)
@@ -189,19 +189,19 @@ function _setupAndSwap(address _fromAsset, address _toAsset, uint256 _amountIn, 
 function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn) public returns (uint256 amountOut)
 ```
 
-### _cancelJob
+### \_cancelJob
 
 ```solidity
 function _cancelJob(bytes32 _jobId) public
 ```
 
-### _getWeb3FunctionHash
+### \_getWeb3FunctionHash
 
 ```solidity
 function _getWeb3FunctionHash(address _from, address _to, uint256 _amount, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval) public view returns (bytes)
 ```
 
-### _gelatoTimeJobCreator
+### \_gelatoTimeJobCreator
 
 ```solidity
 function _gelatoTimeJobCreator(address _from, address _to, uint256 _amount, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, string _web3FunctionHash, bytes _web3FunctionArgsHex) internal returns (bytes32)
@@ -213,43 +213,43 @@ function _gelatoTimeJobCreator(address _from, address _to, uint256 _amount, addr
 error Allowance(uint256 allowance, uint256 amount, address token)
 ```
 
-### _createTimeAutomate
+### \_createTimeAutomate
 
 ```solidity
 function _createTimeAutomate(address _to, uint256 _amount, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, string _web3FunctionHash) public
 ```
 
-### _createMultipleTimeAutomate
+### \_createMultipleTimeAutomate
 
 ```solidity
 function _createMultipleTimeAutomate(address[] _to, uint256[] _amount, address[] _fromToken, address[] _toToken, uint256[] _toChain, uint32[] _destinationDomain, address[] _destinationContract, uint256[] _cycles, uint256[] _startTime, uint256[] _interval, string _web3FunctionHash) external
 ```
 
-### _timeAutomateCron
+### \_timeAutomateCron
 
 ```solidity
 function _timeAutomateCron(address _from, address _to, uint256 _amount, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, uint256 _relayerFeeInTransactingAsset, address _swapper, bytes _swapData) public payable
 ```
 
-### _getWeb3FunctionHash
+### \_getWeb3FunctionHash
 
 ```solidity
 function _getWeb3FunctionHash(address _from, address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, address _tokenA, address _tokenB, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval) public view returns (bytes)
 ```
 
-### _gelatoPriceFeedJobCreator
+### \_gelatoPriceFeedJobCreator
 
 ```solidity
 function _gelatoPriceFeedJobCreator(address _from, address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, address _tokenA, address _tokenB, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, string _web3FunctionHash, bytes _web3FunctionArgsHex) internal returns (bytes32)
 ```
 
-### _createPriceFeedAutomate
+### \_createPriceFeedAutomate
 
 ```solidity
 function _createPriceFeedAutomate(address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, address _tokenA, address _tokenB, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, string _web3FunctionHash) public
 ```
 
-### _createMultiplePriceFeedAutomate
+### \_createMultiplePriceFeedAutomate
 
 ```solidity
 function _createMultiplePriceFeedAutomate(address[] _to, uint256[] _amount, uint256[] _price, address[] _fromToken, address[] _toToken, address[] _tokenA, address[] _tokenB, uint256[] _toChain, uint32[] _destinationDomain, address[] _destinationContract, uint256[] _cycles, uint256[] _startTime, uint256[] _interval, string _web3FunctionHash) external
@@ -261,13 +261,13 @@ function _createMultiplePriceFeedAutomate(address[] _to, uint256[] _amount, uint
 error AmountLessThanRelayer(uint256 _amount, uint256 _relayerFeeInTransactingAsset)
 ```
 
-### _priceFeedAutomateCron
+### \_priceFeedAutomateCron
 
 ```solidity
 function _priceFeedAutomateCron(address _from, address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, uint256 _relayerFeeInTransactingAsset, address _swapper, bytes _swapData) public payable
 ```
 
-### _transferGas
+### \_transferGas
 
 ```solidity
 function _transferGas() external payable
@@ -279,13 +279,13 @@ function _transferGas() external payable
 function getBalanceOfToken(address _address) public view returns (uint256)
 ```
 
-### _getAutomateJobId
+### \_getAutomateJobId
 
 ```solidity
 function _getAutomateJobId(address _from, address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval) public pure returns (bytes32)
 ```
 
-### _getAutomateJobId
+### \_getAutomateJobId
 
 ```solidity
 function _getAutomateJobId(address _from, address _to, uint256 _amount, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval) public pure returns (bytes32)
@@ -299,9 +299,10 @@ function updateTreasury(address _treasury) external
 
 ## AutomateReady
 
-_Inherit this contract to allow your smart contract to
+\_Inherit this contract to allow your smart contract to
+
 - Make synchronous fee payments.
-- Have call restrictions for functions to be automated._
+- Have call restrictions for functions to be automated.\_
 
 ### automate
 
@@ -328,19 +329,19 @@ modifier onlyDedicatedMsgSender()
 ```
 
 @dev
-Only tasks created by _taskCreator defined in constructor can call
+Only tasks created by \_taskCreator defined in constructor can call
 the functions with this modifier.
 
-### __initialize
+### \_\_initialize
 
 ```solidity
 function __initialize(address _automate, address _taskCreator) public
 ```
 
 @dev
-_taskCreator is the address which will create tasks for this contract.
+\_taskCreator is the address which will create tasks for this contract.
 
-### _transfer
+### \_transfer
 
 ```solidity
 function _transfer(uint256 _fee, address _feeToken) internal
@@ -349,9 +350,9 @@ function _transfer(uint256 _fee, address _feeToken) internal
 @dev
 Transfers fee to gelato for synchronous fee payments.
 
-_fee & _feeToken should be queried from IAutomate.getFeeDetails()
+\_fee & \_feeToken should be queried from IAutomate.getFeeDetails()
 
-### _getFeeDetails
+### \_getFeeDetails
 
 ```solidity
 function _getFeeDetails() internal view returns (uint256 fee, address feeToken)
@@ -374,55 +375,55 @@ address fundsOwner
 contract IGelato1Balance gelato1Balance
 ```
 
-### ATC__initialize
+### ATC\_\_initialize
 
 ```solidity
 function ATC__initialize(address _automate, address _fundsOwner) public
 ```
 
-### _depositFunds1Balance
+### \_depositFunds1Balance
 
 ```solidity
 function _depositFunds1Balance(uint256 _amount, address _token, address _sponsor) internal
 ```
 
-### _createTask
+### \_createTask
 
 ```solidity
 function _createTask(address _execAddress, bytes _execDataOrSelector, struct ModuleData _moduleData, address _feeToken) internal returns (bytes32)
 ```
 
-### _cancelTask
+### \_cancelTask
 
 ```solidity
 function _cancelTask(bytes32 _taskId) internal
 ```
 
-### _resolverModuleArg
+### \_resolverModuleArg
 
 ```solidity
 function _resolverModuleArg(address _resolverAddress, bytes _resolverData) internal pure returns (bytes)
 ```
 
-### _timeModuleArg
+### \_timeModuleArg
 
 ```solidity
 function _timeModuleArg(uint256 _startTime, uint256 _interval) internal pure returns (bytes)
 ```
 
-### _proxyModuleArg
+### \_proxyModuleArg
 
 ```solidity
 function _proxyModuleArg() internal pure returns (bytes)
 ```
 
-### _singleExecModuleArg
+### \_singleExecModuleArg
 
 ```solidity
 function _singleExecModuleArg() internal pure returns (bytes)
 ```
 
-### _web3FunctionModuleArg
+### \_web3FunctionModuleArg
 
 ```solidity
 function _web3FunctionModuleArg(string _web3FunctionHash, bytes _web3FunctionArgsHex) internal pure returns (bytes)
@@ -585,7 +586,7 @@ function depositNative(address _sponsor) external payable
 function depositToken(address _sponsor, address _token, uint256 _amount) external
 ```
 
-## WETH9_
+## WETH9\_
 
 ### deposit
 
@@ -677,7 +678,7 @@ struct user {
 }
 ```
 
-### _createdJobs
+### \_createdJobs
 
 ```solidity
 mapping(bytes32 => struct Conditional.user) _createdJobs
@@ -701,18 +702,18 @@ constructor() public
 function initialize(contract IConnext _connext, contract ISwapRouter _swapRouter, address payable _ops) public
 ```
 
-### _authorizeUpgrade
+### \_authorizeUpgrade
 
 ```solidity
 function _authorizeUpgrade(address newImplementation) internal
 ```
 
-_Function that should revert when `msg.sender` is not authorized to upgrade the contract. Called by
+\_Function that should revert when `msg.sender` is not authorized to upgrade the contract. Called by
 {upgradeTo} and {upgradeToAndCall}.
 
 Normally, this function will use an xref:access.adoc[access control] modifier such as {Ownable-onlyOwner}.
 
-```solidity
+````solidity
 function _authorizeUpgrade(address) internal override onlyOwner {}
 ```_
 
@@ -720,7 +721,7 @@ function _authorizeUpgrade(address) internal override onlyOwner {}
 
 ```solidity
 modifier onlySource(address _originSender, uint32 _origin, uint32 _originDomain, address _source)
-```
+````
 
 ### JobCreated
 
@@ -781,10 +782,10 @@ easy swaps on the source side where the amount does not need to be changed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _swapper | address | Address of the swapper to use. |
-| swapData | bytes | Data to pass to the swapper. This data is encoded for a particular swap router. |
+| Name      | Type    | Description                                                                     |
+| --------- | ------- | ------------------------------------------------------------------------------- |
+| \_swapper | address | Address of the swapper to use.                                                  |
+| swapData  | bytes   | Data to pass to the swapper. This data is encoded for a particular swap router. |
 
 ### swapExactInputSingle
 
@@ -792,19 +793,19 @@ easy swaps on the source side where the amount does not need to be changed.
 function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn) internal returns (uint256 amountOut)
 ```
 
-### _cancelJob
+### \_cancelJob
 
 ```solidity
 function _cancelJob(bytes32 _jobId) public
 ```
 
-### _getWeb3FunctionHash
+### \_getWeb3FunctionHash
 
 ```solidity
 function _getWeb3FunctionHash(address _from, address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, address _tokenA, address _tokenB, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval) public view returns (bytes)
 ```
 
-### _gelatoPriceFeedJobCreator
+### \_gelatoPriceFeedJobCreator
 
 ```solidity
 function _gelatoPriceFeedJobCreator(address _from, address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, address _tokenA, address _tokenB, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, string _web3FunctionHash, bytes _web3FunctionArgsHex) internal returns (bytes32)
@@ -816,13 +817,13 @@ function _gelatoPriceFeedJobCreator(address _from, address _to, uint256 _amount,
 error Allowance(uint256 allowance, uint256 amount, address token)
 ```
 
-### _createPriceFeedAutomate
+### \_createPriceFeedAutomate
 
 ```solidity
 function _createPriceFeedAutomate(address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, address _tokenA, address _tokenB, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, string _web3FunctionHash) public
 ```
 
-### _createMultiplePriceFeedAutomate
+### \_createMultiplePriceFeedAutomate
 
 ```solidity
 function _createMultiplePriceFeedAutomate(address[] _to, uint256[] _amount, uint256[] _price, address[] _fromToken, address[] _toToken, address[] _tokenA, address[] _tokenB, uint256[] _toChain, uint32[] _destinationDomain, address[] _destinationContract, uint256[] _cycles, uint256[] _startTime, uint256[] _interval, string _web3FunctionHash) external
@@ -834,7 +835,7 @@ function _createMultiplePriceFeedAutomate(address[] _to, uint256[] _amount, uint
 error AmountLessThanRelayer(uint256 _amount, uint256 _relayerFeeInTransactingAsset)
 ```
 
-### _priceFeedAutomateCron
+### \_priceFeedAutomateCron
 
 ```solidity
 function _priceFeedAutomateCron(address _from, address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval, uint256 _relayerFeeInTransactingAsset) public payable
@@ -846,7 +847,7 @@ function _priceFeedAutomateCron(address _from, address _to, uint256 _amount, uin
 function getBalanceOfToken(address _address) public view returns (uint256)
 ```
 
-### _getAutomateJobId
+### \_getAutomateJobId
 
 ```solidity
 function _getAutomateJobId(address _from, address _to, uint256 _amount, uint256 _price, address _fromToken, address _toToken, uint256 _toChain, uint32 _destinationDomain, address _destinationContract, uint256 _cycles, uint256 _startTime, uint256 _interval) public pure returns (bytes32)
@@ -874,13 +875,13 @@ function swapETH(uint256 _amountIn, address _tokenOut, bytes _swapData) external
 mapping(address => mapping(address => uint256)) userTokenBalance
 ```
 
-### _tokenCredits
+### \_tokenCredits
 
 ```solidity
 mapping(address => struct EnumerableSet.AddressSet) _tokenCredits
 ```
 
-### _whitelistedServices
+### \_whitelistedServices
 
 ```solidity
 struct EnumerableSet.AddressSet _whitelistedServices
@@ -916,18 +917,18 @@ constructor() public
 function initialize() public
 ```
 
-### _authorizeUpgrade
+### \_authorizeUpgrade
 
 ```solidity
 function _authorizeUpgrade(address newImplementation) internal
 ```
 
-_Function that should revert when `msg.sender` is not authorized to upgrade the contract. Called by
+\_Function that should revert when `msg.sender` is not authorized to upgrade the contract. Called by
 {upgradeTo} and {upgradeToAndCall}.
 
 Normally, this function will use an xref:access.adoc[access control] modifier such as {Ownable-onlyOwner}.
 
-```solidity
+````solidity
 function _authorizeUpgrade(address) internal override onlyOwner {}
 ```_
 
@@ -935,17 +936,17 @@ function _authorizeUpgrade(address) internal override onlyOwner {}
 
 ```solidity
 function depositFunds(address _receiver, address _token, uint256 _amount) external payable
-```
+````
 
 Function to deposit Funds which will be used to execute transactions on various services
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _receiver | address | Address receiving the credits |
-| _token | address | Token to be credited, use "0xeeee...." for ETH |
-| _amount | uint256 | Amount to be credited |
+| Name       | Type    | Description                                    |
+| ---------- | ------- | ---------------------------------------------- |
+| \_receiver | address | Address receiving the credits                  |
+| \_token    | address | Token to be credited, use "0xeeee...." for ETH |
+| \_amount   | uint256 | Amount to be credited                          |
 
 ### withdrawFunds
 
@@ -953,15 +954,15 @@ Function to deposit Funds which will be used to execute transactions on various 
 function withdrawFunds(address payable _receiver, address _token, uint256 _amount) external
 ```
 
-Function to withdraw Funds back to the _receiver
+Function to withdraw Funds back to the \_receiver
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _receiver | address payable | Address receiving the credits |
-| _token | address | Token to be credited, use "0xeeee...." for ETH |
-| _amount | uint256 | Amount to be credited |
+| Name       | Type            | Description                                    |
+| ---------- | --------------- | ---------------------------------------------- |
+| \_receiver | address payable | Address receiving the credits                  |
+| \_token    | address         | Token to be credited, use "0xeeee...." for ETH |
+| \_amount   | uint256         | Amount to be credited                          |
 
 ### useFunds
 
@@ -973,11 +974,11 @@ Function called by whitelisted services to handle payments, e.g. Ops"
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _token | address | Token to be used for payment by users |
-| _amount | uint256 | Amount to be deducted |
-| _user | address | Address of user whose balance will be deducted |
+| Name     | Type    | Description                                    |
+| -------- | ------- | ---------------------------------------------- |
+| \_token  | address | Token to be used for payment by users          |
+| \_amount | uint256 | Amount to be deducted                          |
+| \_user   | address | Address of user whose balance will be deducted |
 
 ### addWhitelistedService
 
@@ -989,9 +990,9 @@ Add new service that can call useFunds. Gelato Governance
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _service | address | New service to add |
+| Name      | Type    | Description        |
+| --------- | ------- | ------------------ |
+| \_service | address | New service to add |
 
 ### removeWhitelistedService
 
@@ -1003,9 +1004,9 @@ Remove old service that can call useFunds. Gelato Governance
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _service | address | Old service to remove |
+| Name      | Type    | Description           |
+| --------- | ------- | --------------------- |
+| \_service | address | Old service to remove |
 
 ### getCreditTokensByUser
 
@@ -1017,9 +1018,9 @@ Helper func to get all deposited tokens by a user
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _user | address | User to get the balances from |
+| Name   | Type    | Description                   |
+| ------ | ------- | ----------------------------- |
+| \_user | address | User to get the balances from |
 
 ### getWhitelistedServices
 
@@ -1033,7 +1034,7 @@ function getWhitelistedServices() external view returns (address[])
 address ETH
 ```
 
-## _transfer
+## \_transfer
 
 ```solidity
 function _transfer(address payable _to, address _paymentToken, uint256 _amount) internal
@@ -1052,4 +1053,3 @@ function receiveFlowMessage(address, int96, uint256, uint256) external
 ```solidity
 function receiveRebalanceMessage() external
 ```
-

@@ -118,11 +118,11 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
         emit FundsWithdrawn(_receiver, msg.sender, _token, withdrawAmount);
     }
 
-      /// @notice Function called by whitelisted services to handle payments, e.g. Ops"
+    /// @notice Function called by whitelisted services to handle payments, e.g. Ops"
     /// @param _token Token to be used for payment by users
     /// @param _amount Amount to be deducted
     /// @param _user Address of user whose balance will be deducted
-    function useFunds(
+     function useFunds(
         address _token,
         uint256 _amount,
         address _user

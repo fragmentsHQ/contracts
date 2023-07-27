@@ -5,7 +5,7 @@
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
 const hre = require("hardhat");
-const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
+const { getImplementationAddress } = require("@openzeppelin/upgrades-core");
 
 const deployGoerli = async () => {
   const XStreamPool = await hre.ethers.getContractFactory("XStreamPool");
@@ -20,19 +20,19 @@ const deployGoerli = async () => {
 
   await xStreamPool.deployed();
 
-  console.log(
-    `Deployed to ${xStreamPool.address}`
+  console.log(`Deployed to ${xStreamPool.address}`);
+
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    xStreamPool.address
   );
 
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, xStreamPool.address);
-
-  console.log('Implementation Contract Address:', currentImplAddress);
+  console.log("Implementation Contract Address:", currentImplAddress);
 
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
-}
-
+};
 
 const deployMumbai = async () => {
   const XStreamPool = await hre.ethers.getContractFactory("XStreamPool");
@@ -47,18 +47,19 @@ const deployMumbai = async () => {
 
   await xStreamPool.deployed();
 
-  console.log(
-    `Deployed to ${xStreamPool.address}`
+  console.log(`Deployed to ${xStreamPool.address}`);
+
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    xStreamPool.address
   );
 
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, xStreamPool.address);
-
-  console.log('Implementation Contract Address:', currentImplAddress);
+  console.log("Implementation Contract Address:", currentImplAddress);
 
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
-}
+};
 
 const deployPolygon = async () => {
   const XStreamPool = await hre.ethers.getContractFactory("XStreamPool");
@@ -73,18 +74,19 @@ const deployPolygon = async () => {
 
   await xStreamPool.deployed();
 
-  console.log(
-    `Deployed to ${xStreamPool.address}`
+  console.log(`Deployed to ${xStreamPool.address}`);
+
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    xStreamPool.address
   );
 
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, xStreamPool.address);
-
-  console.log('Implementation Contract Address:', currentImplAddress);
+  console.log("Implementation Contract Address:", currentImplAddress);
 
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
-}
+};
 
 const deployGnosis = async () => {
   const XStreamPool = await hre.ethers.getContractFactory("XStreamPool");
@@ -99,22 +101,19 @@ const deployGnosis = async () => {
 
   await xStreamPool.deployed();
 
-  console.log(
-    `Deployed to ${xStreamPool.address}`
+  console.log(`Deployed to ${xStreamPool.address}`);
+
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    xStreamPool.address
   );
 
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, xStreamPool.address);
-
-  console.log('Implementation Contract Address:', currentImplAddress);
+  console.log("Implementation Contract Address:", currentImplAddress);
 
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
-}
-
-
-
-
+};
 
 async function main() {
   const chainId = hre.network.config.chainId;
@@ -133,24 +132,6 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //TODO  /// @dev Connext contracts GNOSIS.
 // IConnext public immutable connext =

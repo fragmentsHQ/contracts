@@ -1,8 +1,8 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 require("@nomiclabs/hardhat-etherscan");
-require('@openzeppelin/hardhat-upgrades');
-require('solidity-docgen');
+require("@openzeppelin/hardhat-upgrades");
+require("solidity-docgen");
 // require("@nomiclabs/hardhat-ethers");
 // require("@nomiclabs/hardhat-waffle");
 
@@ -15,30 +15,29 @@ module.exports = {
         enabled: true,
         runs: 200,
       },
-      viaIR: true
+      viaIR: true,
     },
   },
   networks: {
     hardhat: {
       forking: {
-        url: process.env.ALCHEMY_MUMBAI_API_URL
-      }
+        url: process.env.ALCHEMY_MUMBAI_API_URL,
+      },
     },
     goerli: {
       chainId: 5,
       url: process.env.ALCHEMY_GOERLI_API_URL,
-      accounts: [process.env.PRIVATE_KEY]
+      accounts: [process.env.PRIVATE_KEY],
     },
     mumbai: {
       chainId: 80001,
       url: process.env.ALCHEMY_MUMBAI_API_URL,
-      accounts: [process.env.PRIVATE_KEY]
+      accounts: [process.env.PRIVATE_KEY],
     },
-    zkEVM : {
+    zkEVM: {
       chainId: 1442,
       url: "https://rpc.public.zkevm-test.net",
-      accounts: [process.env.PRIVATE_KEY]
-
+      accounts: [process.env.PRIVATE_KEY],
     },
     // gnosis: {
     //   chainId: 100,
@@ -54,8 +53,8 @@ module.exports = {
   etherscan: {
     apiKey: {
       goerli: process.env.ETHERSCAN_API_KEY,
-      polygonMumbai: process.env.POLYGONSCAN_API_KEY
-    }
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY,
+    },
   },
-  docgen: {}
+  docgen: {},
 };

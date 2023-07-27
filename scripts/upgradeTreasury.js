@@ -1,28 +1,23 @@
 // scripts/upgrade_box.js
-const { ethers, upgrades } = require('hardhat');
-const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
-
+const { ethers, upgrades } = require("hardhat");
+const { getImplementationAddress } = require("@openzeppelin/upgrades-core");
 
 async function upgradeGoerli() {
-
-  //  impersonating vitalik's account
-  await network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: ["0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7"],
-  });
-
   //put the current proxy address for respective network here
-  const currentProxyAddress = '0x6e2b6959c81183dCe1EB5819E573092bee28511b'
+  const currentProxyAddress = "0x6e2b6959c81183dCe1EB5819E573092bee28511b";
 
-  const TreasuryV2 = await ethers.getContractFactory('Treasury');
+  const TreasuryV2 = await ethers.getContractFactory("Treasury");
 
-  console.log('Upgrading Treasury...');
+  console.log("Upgrading Treasury...");
   await upgrades.upgradeProxy(currentProxyAddress, TreasuryV2);
-  console.log('Treasury upgraded');
+  console.log("Treasury upgraded");
 
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, currentProxyAddress);
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    currentProxyAddress
+  );
 
-  console.log('New Implementation Contract Address:', currentImplAddress);
+  console.log("New Implementation Contract Address:", currentImplAddress);
 
   await hre.run("verify:verify", {
     address: currentImplAddress,
@@ -31,25 +26,25 @@ async function upgradeGoerli() {
 
 async function upgradeMumbai() {
   //put the current proxy address for respective network here
-  const currentProxyAddress = '0x1Ff5C1D4713772C5AA17d551039d9599Bc65C31C'
+  const currentProxyAddress = "0x1Ff5C1D4713772C5AA17d551039d9599Bc65C31C";
 
-  const TreasuryV2 = await ethers.getContractFactory('Treasury');
+  const TreasuryV2 = await ethers.getContractFactory("Treasury");
 
-  console.log('Upgrading Treasury...');
+  console.log("Upgrading Treasury...");
   await upgrades.upgradeProxy(currentProxyAddress, TreasuryV2);
-  console.log('Treasury upgraded');
+  console.log("Treasury upgraded");
 
-  const currentImplAddress = await getImplementationAddress(hre.network.provider, currentProxyAddress);
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    currentProxyAddress
+  );
 
-  console.log('New Implementation Contract Address:', currentImplAddress);
+  console.log("New Implementation Contract Address:", currentImplAddress);
 
   await hre.run("verify:verify", {
     address: currentImplAddress,
   });
 }
-
-
-
 
 async function main() {
   const chainId = hre.network.config.chainId;
