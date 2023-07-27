@@ -470,8 +470,9 @@ contract AutoPay is AutomateTaskCreator {
         moduleData.args[0] = _timeModuleArg(_startTime, _interval);
         moduleData.args[1] = _proxyModuleArg();
         moduleData.args[2] = _web3FunctionModuleArg(_web3FunctionHash, _web3FunctionArgsHex);
+        
 
-        bytes32 id = _createTask(address(this), execData, moduleData, address(0));
+        bytes32 id = _createTask(dedicatedMsgSender, execData, moduleData, address(0));
 
         return id;
     }
