@@ -44,6 +44,8 @@ interface ITreasury {
 
     function gelato() external view returns (address);
 
+    function owner() external view returns (address);
+
     function getCreditTokensByUser(address user)
         external
         view
@@ -55,4 +57,5 @@ interface ITreasury {
         external
         view
         returns (uint256);
+        
 }

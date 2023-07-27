@@ -118,7 +118,7 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
         emit FundsWithdrawn(_receiver, msg.sender, _token, withdrawAmount);
     }
 
-    /// @notice Function called by whitelisted services to handle payments, e.g. Ops"
+      /// @notice Function called by whitelisted services to handle payments, e.g. Ops"
     /// @param _token Token to be used for payment by users
     /// @param _amount Amount to be deducted
     /// @param _user Address of user whose balance will be deducted
@@ -128,15 +128,11 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
         address _user
     ) external onlyWhitelistedServices {
         address _owner = owner();
-        require(_amount > userTokenBalance[_owner][_token], "useFunds: ETH transfer failed");
+        require(_amount <= userTokenBalance[_user][_token], "useFunds: ETH transfer failed");
 
-        userTokenBalance[_user][_token] =
-            userTokenBalance[_user][_token] -
-            _amount;
+        userTokenBalance[_user][_token] -= _amount;
         
-        userTokenBalance[_owner][_token] =
-            userTokenBalance[_owner][_token] -
-            _amount;
+        userTokenBalance[_owner][_token] += _amount;
 
         if (userTokenBalance[_user][_token] == 0)
             _tokenCredits[_user].remove(_token);
