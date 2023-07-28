@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "hardhat/console.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IConnext} from "@connext/smart-contracts/contracts/core/connext/interfaces/IConnext.sol";
+// import {IConnext} from "@connext/smart-contracts/contracts/core/connext/interfaces/IConnext.sol";
 import {IXReceiver} from "@connext/smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol";
 
 import {IConstantFlowAgreementV1} from
@@ -18,6 +18,7 @@ import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/app
 
 import "./interfaces/AutomateTaskCreator.sol";
 import {IDestinationPool} from "./interfaces/IDestinationPool.sol";
+import "./interfaces/IConnext.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";

@@ -4,7 +4,7 @@ require("@nomiclabs/hardhat-etherscan");
 require("@openzeppelin/hardhat-upgrades");
 require("solidity-docgen");
 require("hardhat-gas-reporter");
-// require("@nomicfoundation/hardhat-foundry");
+require("@nomicfoundation/hardhat-foundry");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
