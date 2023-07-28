@@ -19,6 +19,7 @@ import "hardhat/console.sol";
 import "./interfaces/AutomateTaskCreator.sol";
 import "./interfaces/WETH9_.sol";
 import "./interfaces/Treasury.sol";
+import "./interfaces/IOpsProxy.sol";
 
 contract AutoPay is AutomateTaskCreator {
     using SafeERC20 for IERC20;
@@ -389,22 +390,7 @@ contract AutoPay is AutomateTaskCreator {
     ) public view returns (bytes memory) {
         string memory __amount = Strings.toString(_amount);
         return (
-            abi.encode(
-                _from.toHexString(),
-                _to.toHexString(),
-                __amount,
-                _fromToken.toHexString(),
-                _toToken.toHexString(),
-                block.chainid,
-                _toChain,
-                connext.domain(),
-                _destinationDomain,
-                address(this).toHexString(),
-                _destinationContract.toHexString(),
-                _cycles,
-                _startTime,
-                _interval,
-                _isForwardPaying
+            abi.encode( _from.toHexString(), _to.toHexString(), __amount, _fromToken.toHexString(), _toToken.toHexString(), block.chainid, _toChain, connext.domain(), _destinationDomain, address(this).toHexString(), _destinationContract.toHexString(), _cycles, _startTime, _interval, _isForwardPaying
             )
         );
     }
@@ -412,55 +398,23 @@ contract AutoPay is AutomateTaskCreator {
     /**
      * @notice  .
      * @dev     .
-     * @param   _from  .
-     * @param   _to  .
-     * @param   _amount  .
-     * @param   _fromToken  .
-     * @param   _toToken  .
-     * @param   _toChain  .
-     * @param   _destinationDomain  .
-     * @param   _destinationContract  .
-     * @param   _cycles  .
      * @param   _startTime  .
      * @param   _interval  .
-     * @param   _web3FunctionHash  .
      * @param   _web3FunctionArgsHex  .
      * @return  bytes32  .
      */
+    
     function _gelatoTimeJobCreator(
-        address _from,
-        address _to,
-        uint256 _amount,
-        address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        uint32 _destinationDomain,
-        address _destinationContract,
-        uint256 _cycles,
         uint256 _startTime,
         uint256 _interval,
-        bool _isForwardPaying,
-        string memory _web3FunctionHash,
         bytes memory _web3FunctionArgsHex
     ) internal returns (bytes32) {
+        
         bytes memory execData = abi.encodeWithSelector(
-            this._timeAutomateCron.selector,
-            _from,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationDomain,
-            _destinationContract,
-            _cycles,
-            _startTime,
-            _interval,
-            0,
-            _isForwardPaying,
-            address(0),
-            bytes("")
+            IOpsProxy.batchExecuteCall.selector
         );
+
+        string memory _web3FunctionHash = _web3functionHashes[Option.TIME];
 
         ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
         moduleData.modules[0] = Module.TIME;
@@ -470,7 +424,6 @@ contract AutoPay is AutomateTaskCreator {
         moduleData.args[0] = _timeModuleArg(_startTime, _interval);
         moduleData.args[1] = _proxyModuleArg();
         moduleData.args[2] = _web3FunctionModuleArg(_web3FunctionHash, _web3FunctionArgsHex);
-        
 
         bytes32 id = _createTask(dedicatedMsgSender, execData, moduleData, address(0));
 
@@ -508,71 +461,15 @@ contract AutoPay is AutomateTaskCreator {
             revert Allowance(IERC20(_fromToken).allowance(msg.sender, address(this)), _amount, _fromToken);
         }
 
-        bytes memory _web3FunctionArgsHex = _getWeb3FunctionHash(
-            msg.sender,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationDomain,
-            _destinationContract,
-            _cycles,
-            _startTime,
-            _interval,
-            _isForwardPaying
-        );
+        bytes memory _web3FunctionArgsHex = _getWeb3FunctionHash( msg.sender, _to, _amount, _fromToken, _toToken, _toChain, _destinationDomain, _destinationContract, _cycles, _startTime, _interval, _isForwardPaying );
 
-        bytes32 _id = _gelatoTimeJobCreator(
-            msg.sender,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationDomain,
-            _destinationContract,
-            _cycles,
-            _startTime,
-            _interval,
-            _isForwardPaying,
-            _web3functionHashes[Option.TIME],
-            _web3FunctionArgsHex
-        );
+        bytes32 _id = _gelatoTimeJobCreator( _startTime, _interval, _web3FunctionArgsHex);
 
-        bytes32 _jobId = _getAutomateJobId(
-            msg.sender,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationDomain,
-            _destinationContract,
-            _cycles,
-            _startTime,
-            _interval
-        );
+        bytes32 _jobId = _getAutomateJobId( msg.sender, _to, _amount, _fromToken, _toToken, _toChain, _destinationDomain, _destinationContract, _cycles, _startTime, _interval );
 
         _createdJobs[_jobId] = user(msg.sender, _cycles, 0, _id);
 
-        emit JobCreated(
-            msg.sender,
-            _jobId,
-            _id,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationDomain,
-            _destinationContract,
-            _cycles,
-            _startTime,
-            _interval,
-            _isForwardPaying,
-            Option.TIME
-        );
+        emit JobCreated( msg.sender, _jobId, _id, _to, _amount, _fromToken, _toToken, _toChain, _destinationDomain, _destinationContract, _cycles, _startTime, _interval, _isForwardPaying, Option.TIME );
     }
 
     /**
@@ -666,7 +563,7 @@ contract AutoPay is AutomateTaskCreator {
         }
 
         TransferHelper.safeTransferFrom(_fromToken, _from, address(this), _amount);
-        // IERC20(_fromToken).transferFrom(_from, address(this), _amount);
+      
         uint256 slippage = 300;
 
         uint256 amountOut = _amount;
@@ -675,7 +572,6 @@ contract AutoPay is AutomateTaskCreator {
             amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
             // amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
             TransferHelper.safeTransfer(_toToken, _to, amountOut);
-            // IERC20(_toToken).transfer(_to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
                 _from,
@@ -690,22 +586,9 @@ contract AutoPay is AutomateTaskCreator {
             );
         } else {
             TransferHelper.safeTransfer(_fromToken, _to, amountOut);
-            // IERC20(_fromToken).transfer(_to, amountOut);
         }
 
-        bytes32 _jobId = _getAutomateJobId(
-            _from,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationDomain,
-            _destinationContract,
-            _cycles,
-            _startTime,
-            _interval
-        );
+        bytes32 _jobId = _getAutomateJobId( _from, _to, _amount, _fromToken, _toToken, _toChain, _destinationDomain, _destinationContract, _cycles, _startTime, _interval );
 
         user storage userInfo = _createdJobs[_jobId];
         require(userInfo._user != address(0), "NO JOB Found");
@@ -754,19 +637,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _interval
     ) public pure returns (bytes32) {
         return keccak256(
-            abi.encode(
-                _from,
-                _to,
-                _amount,
-                _fromToken,
-                _toToken,
-                _toChain,
-                _destinationDomain,
-                _destinationContract,
-                _cycles,
-                _startTime,
-                _interval
-            )
+            abi.encode( _from, _to, _amount, _fromToken, _toToken, _toChain, _destinationDomain, _destinationContract, _cycles, _startTime, _interval)
         );
     }
 
@@ -791,7 +662,21 @@ contract AutoPay is AutomateTaskCreator {
         }
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _fee  .
+     */
     function updateFee(uint256 _fee) external onlyOwner {
         FEES = _fee;
+    }
+
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   _gelatoTaskID  .
+     */
+    function _forceCancelGelato(bytes32 _gelatoTaskID) external onlyOwner {
+        _cancelTask(_gelatoTaskID);
     }
 }

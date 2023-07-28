@@ -33,8 +33,7 @@
     "chai": "4.2.0",
     "hardhat": "2.12.6",
     "hardhat-gas-reporter": "^1.0.8",
-    "solidity-coverage": "0.8.1",
-    "typechain": "8.1.0"
+    "solidity-coverage": "0.8.1"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.6.1",
