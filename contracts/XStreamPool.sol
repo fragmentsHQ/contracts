@@ -81,10 +81,10 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         _;
     }
 
-    IConnext public  connext;
-    ISuperfluid public  host;
-    IConstantFlowAgreementV1 public  cfa;
-    ISuperToken public  superToken;
+    IConnext public connext;
+    ISuperfluid public host;
+    IConstantFlowAgreementV1 public cfa;
+    ISuperToken public superToken;
     IERC20 public erc20Token;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -101,8 +101,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         address _connext,
         address _superToken,
         address _erc20Token
-    ) public initializer  {
-
+    ) public initializer {
         AutomateTaskCreator.ATC__initialize(_ops, msg.sender);
 
         host = ISuperfluid(_host);
@@ -125,7 +124,6 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
     {
         _sendRebalanceMessage(destinationDomain, destinationContract, relayerFeeInTransactingAsset);
     }
-
 
     function xTransfer(address _recipient, uint32 _originDomain, uint256 _amount, uint256 relayerFeeInTransactingAsset)
         internal
@@ -225,7 +223,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
             0,
             relayerFeeInTransactingAsset,
             destinationDomain
-            );
+        );
     }
 
     function _sendToManyFlowMessage(
@@ -277,7 +275,6 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         );
         emit RebalanceMessageSent(balance);
     }
-
 
     event StreamStart(address indexed sender, address receiver, int96 flowRate, uint256 startTime);
     event StreamUpdate(address indexed sender, address indexed receiver, int96 flowRate, uint256 startTime);
@@ -334,7 +331,6 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         }
 
         host.callAgreement(cfa, callData, new bytes(0));
-    
     }
 
     struct StreamInfo {
@@ -375,7 +371,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
             streamInfo.sender,
             streamInfo.receiver,
             streamInfo.flowRate
-            );
+        );
         approveSuperToken(address(_asset), _amount);
         receiveFlowMessage(
             streamInfo.receiver, streamInfo.flowRate, _amount, streamInfo.startTime, streamInfo.streamActionType

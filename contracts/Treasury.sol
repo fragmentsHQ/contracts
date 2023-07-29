@@ -1,17 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {
-    SafeERC20,
-    IERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {
-    ReentrancyGuardUpgradeable
-} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -19,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {_transfer, ETH} from "./helpers/Utils.sol";
 
-contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
+contract Treasury is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
@@ -27,54 +20,33 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
     mapping(address => EnumerableSet.AddressSet) internal _tokenCredits;
     EnumerableSet.AddressSet internal _whitelistedServices;
 
-    event FundsDeposited(
-        address indexed sender,
-        address indexed token,
-        uint256 indexed amount
-    );
-    event FundsWithdrawn(
-        address indexed receiver,
-        address indexed initiator,
-        address indexed token,
-        uint256 amount
-    );
+    event FundsDeposited(address indexed sender, address indexed token, uint256 indexed amount);
+    event FundsWithdrawn(address indexed receiver, address indexed initiator, address indexed token, uint256 amount);
 
     modifier onlyWhitelistedServices() {
-        require(
-            _whitelistedServices.contains(msg.sender),
-            "TaskTreasury: onlyWhitelistedServices"
-        );
+        require(_whitelistedServices.contains(msg.sender), "TaskTreasury: onlyWhitelistedServices");
         _;
     }
 
-      /// @custom:oz-upgrades-unsafe-allow constructor
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
     function initialize() public initializer {
-
         __Ownable_init();
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
     }
 
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        onlyOwner
-        override
-    {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     // solhint-disable max-line-length
     /// @notice Function to deposit Funds which will be used to execute transactions on various services
     /// @param _receiver Address receiving the credits
     /// @param _token Token to be credited, use "0xeeee...." for ETH
     /// @param _amount Amount to be credited
-    function depositFunds(
-        address _receiver,
-        address _token,
-        uint256 _amount
-    ) external payable {
+    function depositFunds(address _receiver, address _token, uint256 _amount) external payable {
         uint256 depositAmount;
         if (_token == ETH) {
             depositAmount = msg.value;
@@ -86,12 +58,11 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
             depositAmount = postBalance - preBalance;
         }
 
-        userTokenBalance[_receiver][_token] =
-            userTokenBalance[_receiver][_token] +
-            depositAmount;
+        userTokenBalance[_receiver][_token] = userTokenBalance[_receiver][_token] + depositAmount;
 
-        if (!_tokenCredits[_receiver].contains(_token))
+        if (!_tokenCredits[_receiver].contains(_token)) {
             _tokenCredits[_receiver].add(_token);
+        }
 
         emit FundsDeposited(_receiver, _token, depositAmount);
     }
@@ -100,11 +71,7 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
     /// @param _receiver Address receiving the credits
     /// @param _token Token to be credited, use "0xeeee...." for ETH
     /// @param _amount Amount to be credited
-    function withdrawFunds(
-        address payable _receiver,
-        address _token,
-        uint256 _amount
-    ) external nonReentrant {
+    function withdrawFunds(address payable _receiver, address _token, uint256 _amount) external nonReentrant {
         uint256 balance = userTokenBalance[msg.sender][_token];
 
         uint256 withdrawAmount = Math.min(balance, _amount);
@@ -122,21 +89,17 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
     /// @param _token Token to be used for payment by users
     /// @param _amount Amount to be deducted
     /// @param _user Address of user whose balance will be deducted
-    function useFunds(
-        address _token,
-        uint256 _amount,
-        address _user
-    ) external onlyWhitelistedServices {
+    function useFunds(address _token, uint256 _amount, address _user) external onlyWhitelistedServices {
         address _owner = owner();
         require(_amount <= userTokenBalance[_user][_token], "useFunds: ETH transfer failed");
 
         userTokenBalance[_user][_token] -= _amount;
-        
+
         userTokenBalance[_owner][_token] += _amount;
 
-        if (userTokenBalance[_user][_token] == 0)
+        if (userTokenBalance[_user][_token] == 0) {
             _tokenCredits[_user].remove(_token);
-
+        }
     }
 
     // Governance functions
@@ -144,20 +107,14 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
     /// @notice Add new service that can call useFunds. Gelato Governance
     /// @param _service New service to add
     function addWhitelistedService(address _service) external onlyOwner {
-        require(
-            !_whitelistedServices.contains(_service),
-            "TaskTreasury: addWhitelistedService: whitelisted"
-        );
+        require(!_whitelistedServices.contains(_service), "TaskTreasury: addWhitelistedService: whitelisted");
         _whitelistedServices.add(_service);
     }
 
     /// @notice Remove old service that can call useFunds. Gelato Governance
     /// @param _service Old service to remove
     function removeWhitelistedService(address _service) external onlyOwner {
-        require(
-            _whitelistedServices.contains(_service),
-            "TaskTreasury: addWhitelistedService: !whitelisted"
-        );
+        require(_whitelistedServices.contains(_service), "TaskTreasury: addWhitelistedService: !whitelisted");
         _whitelistedServices.remove(_service);
     }
 
@@ -165,11 +122,7 @@ contract Treasury is Initializable,OwnableUpgradeable, UUPSUpgradeable, Reentran
 
     /// @notice Helper func to get all deposited tokens by a user
     /// @param _user User to get the balances from
-    function getCreditTokensByUser(address _user)
-        external
-        view
-        returns (address[] memory)
-    {
+    function getCreditTokensByUser(address _user) external view returns (address[] memory) {
         uint256 length = _tokenCredits[_user].length();
         address[] memory creditTokens = new address[](length);
 

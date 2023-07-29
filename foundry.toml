@@ -5,3 +5,5 @@ libs = ['node_modules', 'lib']
 test = 'test'
 cache_path  = 'cache_forge'
 via-ir = true
+optimize = true
+optimizer_runs = 200

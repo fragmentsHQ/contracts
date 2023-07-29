@@ -42,9 +42,5 @@ interface IOpsProxyFactory {
 interface IGelato1Balance {
     function depositNative(address _sponsor) external payable;
 
-    function depositToken(
-        address _sponsor,
-        address _token,
-        uint256 _amount
-    ) external;
+    function depositToken(address _sponsor, address _token, uint256 _amount) external;
 }

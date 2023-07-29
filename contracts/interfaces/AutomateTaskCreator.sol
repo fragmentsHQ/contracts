@@ -13,23 +13,15 @@ abstract contract AutomateTaskCreator is AutomateReady {
     using SafeERC20 for IERC20;
 
     address public fundsOwner;
-    IGelato1Balance public constant gelato1Balance =
-        IGelato1Balance(0x7506C12a824d73D9b08564d5Afc22c949434755e);
+    IGelato1Balance public constant gelato1Balance = IGelato1Balance(0x7506C12a824d73D9b08564d5Afc22c949434755e);
 
-    function ATC__initialize(
-        address _automate,
-        address _fundsOwner
-    ) public onlyInitializing {
+    function ATC__initialize(address _automate, address _fundsOwner) public onlyInitializing {
         AutomateReady.__initialize(_automate, address(this));
 
         fundsOwner = _fundsOwner;
     }
 
-    function _depositFunds1Balance(
-        uint256 _amount,
-        address _token,
-        address _sponsor
-    ) internal {
+    function _depositFunds1Balance(uint256 _amount, address _token, address _sponsor) internal {
         if (_token == ETH) {
             ///@dev Only deposit ETH on goerli for now.
             require(block.chainid == 5, "Only deposit ETH on goerli");
@@ -37,9 +29,7 @@ abstract contract AutomateTaskCreator is AutomateReady {
         } else {
             ///@dev Only deposit USDC on polygon for now.
             require(
-                block.chainid == 137 &&
-                    _token ==
-                    address(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174),
+                block.chainid == 137 && _token == address(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174),
                 "Only deposit USDC on polygon"
             );
             IERC20(_token).approve(address(gelato1Balance), _amount);
@@ -53,30 +43,22 @@ abstract contract AutomateTaskCreator is AutomateReady {
         ModuleData memory _moduleData,
         address _feeToken
     ) internal returns (bytes32) {
-        return
-            automate.createTask(
-                _execAddress,
-                _execDataOrSelector,
-                _moduleData,
-                _feeToken
-            );
+        return automate.createTask(_execAddress, _execDataOrSelector, _moduleData, _feeToken);
     }
 
     function _cancelTask(bytes32 _taskId) internal {
         automate.cancelTask(_taskId);
     }
 
-    function _resolverModuleArg(
-        address _resolverAddress,
-        bytes memory _resolverData
-    ) internal pure returns (bytes memory) {
+    function _resolverModuleArg(address _resolverAddress, bytes memory _resolverData)
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(_resolverAddress, _resolverData);
     }
 
-    function _timeModuleArg(
-        uint256 _startTime,
-        uint256 _interval
-    ) internal pure returns (bytes memory) {
+    function _timeModuleArg(uint256 _startTime, uint256 _interval) internal pure returns (bytes memory) {
         return abi.encode(uint128(_startTime), uint128(_interval));
     }
 
@@ -88,10 +70,11 @@ abstract contract AutomateTaskCreator is AutomateReady {
         return bytes("");
     }
 
-    function _web3FunctionModuleArg(
-        string memory _web3FunctionHash,
-        bytes memory _web3FunctionArgsHex
-    ) internal pure returns (bytes memory) {
+    function _web3FunctionModuleArg(string memory _web3FunctionHash, bytes memory _web3FunctionArgsHex)
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(_web3FunctionHash, _web3FunctionArgsHex);
     }
 }

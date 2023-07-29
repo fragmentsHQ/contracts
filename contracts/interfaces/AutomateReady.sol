@@ -13,7 +13,7 @@ import "./Types.sol";
  * - Have call restrictions for functions to be automated.
  */
 // solhint-disable private-vars-leading-underscore
-abstract contract AutomateReady is Initializable,OwnableUpgradeable, UUPSUpgradeable {
+abstract contract AutomateReady is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     IAutomate public automate;
     address public dedicatedMsgSender;
     address private _gelato;
@@ -33,22 +33,15 @@ abstract contract AutomateReady is Initializable,OwnableUpgradeable, UUPSUpgrade
      * @dev
      * _taskCreator is the address which will create tasks for this contract.
      */
-    function __initialize(
-        address _automate,
-        address _taskCreator
-    ) public onlyInitializing {
+    function __initialize(address _automate, address _taskCreator) public onlyInitializing {
         automate = IAutomate(_automate);
         _gelato = IAutomate(_automate).gelato();
 
-        address proxyModuleAddress = IAutomate(_automate).taskModuleAddresses(
-            Module.PROXY
-        );
+        address proxyModuleAddress = IAutomate(_automate).taskModuleAddresses(Module.PROXY);
 
-        address opsProxyFactoryAddress = IProxyModule(proxyModuleAddress)
-            .opsProxyFactory();
+        address opsProxyFactoryAddress = IProxyModule(proxyModuleAddress).opsProxyFactory();
 
-        (dedicatedMsgSender, ) = IOpsProxyFactory(opsProxyFactoryAddress)
-            .getProxyOf(_taskCreator);
+        (dedicatedMsgSender,) = IOpsProxyFactory(opsProxyFactoryAddress).getProxyOf(_taskCreator);
     }
 
     /**
@@ -59,18 +52,14 @@ abstract contract AutomateReady is Initializable,OwnableUpgradeable, UUPSUpgrade
      */
     function _transfer(uint256 _fee, address _feeToken) internal {
         if (_feeToken == ETH) {
-            (bool success, ) = _gelato.call{value: _fee}("");
+            (bool success,) = _gelato.call{value: _fee}("");
             require(success, "_transfer: ETH transfer failed");
         } else {
             SafeERC20.safeTransfer(IERC20(_feeToken), _gelato, _fee);
         }
     }
 
-    function _getFeeDetails()
-        internal
-        view
-        returns (uint256 fee, address feeToken)
-    {
+    function _getFeeDetails() internal view returns (uint256 fee, address feeToken) {
         (fee, feeToken) = automate.getFeeDetails();
     }
 }

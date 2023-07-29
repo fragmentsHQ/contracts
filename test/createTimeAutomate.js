@@ -10,7 +10,13 @@ describe("AutoPay - Create Time Automate", function () {
         const AutoPay = await ethers.getContractFactory("AutoPay");
         [owner, user1] = await ethers.getSigners();
 
-        autoPay = await AutoPay.deploy();
+        const autoPay = await upgrades.deployProxy(AutoPay, [
+            "0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649",
+            "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+            "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0",
+            "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
+        ], { initializer: 'initialize', kind: 'uups' });
+
         await autoPay.deployed();
     });
 
@@ -28,8 +34,6 @@ describe("AutoPay - Create Time Automate", function () {
         const interval = 3600; // 1 hour interval
         const isForwardPaying = true;
 
-        // Set user1 as the signer for the transaction
-        const user1AutoPay = autoPay.connect(user1);
 
         // Set user1 as the signer for the transaction
         const tokenContract = await ethers.getContractAt(
@@ -41,23 +45,25 @@ describe("AutoPay - Create Time Automate", function () {
         // Make sure user1 approves AutoPay contract to spend the required amount of fromToken
         await tokenContract.approve(fromToken, amount);
 
+        console.log(autoPay);
+
         // Create the time automate
-        await user1AutoPay._createTimeAutomate(
-                to,
-                amount,
-                fromToken,
-                toToken,
-                toChain,
-                destinationDomain,
-                destinationContract,
-                cycles,
-                startTime,
-                interval,
-                isForwardPaying
+        await autoPay._createTimeAutomate(
+            to,
+            amount,
+            fromToken,
+            toToken,
+            toChain,
+            destinationDomain,
+            destinationContract,
+            cycles,
+            startTime,
+            interval,
+            isForwardPaying
         )
 
         // Verify that the created job is stored in the contract
-        const jobId = await user1AutoPay._getAutomateJobId(
+        const jobId = await autoPay._getAutomateJobId(
             to,
             amount,
             fromToken,
