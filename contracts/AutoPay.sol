@@ -50,9 +50,21 @@ contract AutoPay is AutomateTaskCreator {
         bytes32 _gelatoTaskID;
     }
 
+    /**
+     * @notice  . mapping to store all ongoing jobs
+     * @dev     . key is the unique jobId
+     */    
     mapping(bytes32 => user) public _createdJobs;
+    /**
+     * @notice  . mapping to store all web3 function hashes
+     * @dev     . key is the option enum
+     */ 
     mapping(Option => string) public _web3functionHashes;
 
+    /**
+     * @notice  .Event triggered when a job is created on the source chain
+     * @dev     .
+     */ 
     event JobCreated(
         address indexed _taskCreator,
         bytes32 indexed _jobId,
@@ -71,15 +83,10 @@ contract AutoPay is AutomateTaskCreator {
         Option option
     );
 
-    event JobSuccess(
-        uint256 indexed txFee,
-        address indexed feeToken,
-        address indexed execAddress,
-        bytes execData,
-        bytes32 taskId,
-        bool callSuccess
-    );
-
+    /**
+     * @notice  .Event triggered when a xcall is made from source chain
+     * @dev     .
+     */
     event XTransferData(
         address indexed sender,
         address indexed receiver,
@@ -92,6 +99,10 @@ contract AutoPay is AutomateTaskCreator {
         uint32 destinationDomain
     );
 
+     /**
+     * @notice  .Event triggered when a xcall is received on destination chain
+     * @dev     .
+     */
     event XReceiveData(
         address indexed originSender,
         uint32 origin,
@@ -103,6 +114,10 @@ contract AutoPay is AutomateTaskCreator {
         address receiverAccount
     );
 
+     /**
+     * @notice  .Event triggered when a job is executed on source chain
+     * @dev     .
+     */
     event ExecutedSourceChain(
         bytes32 indexed _jobId,
         address indexed _from,
