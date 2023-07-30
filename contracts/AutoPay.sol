@@ -409,12 +409,12 @@ contract AutoPay is AutomateTaskCreator {
     }
 
     /**
-     * @notice  .
-     * @dev     .
-     * @param   _startTime  .
-     * @param   _interval  .
-     * @param   _web3FunctionArgsHex  .
-     * @return  bytes32  .
+     * @notice  .Function called to create task on gelato
+     * @dev     .returns gelatoTaxId
+     * @param   _startTime  . time when the first cycle should be executed (unixtime in seconds)
+     * @param   _interval  . time interval between each cycle (in seconds)
+     * @param   _web3FunctionArgsHex  . calldata for the task
+     * @return  bytes32  . returns gelatoTaskId
      */
 
     function _gelatoTimeJobCreator(uint256 _startTime, uint256 _interval, bytes memory _web3FunctionArgsHex)
@@ -572,22 +572,22 @@ contract AutoPay is AutomateTaskCreator {
     }
 
     /**
-     * @notice  .
-     * @dev     .
-     * @param   _from  .
-     * @param   _to  .
-     * @param   _amount  .
-     * @param   _fromToken  .
-     * @param   _toToken  .
-     * @param   _toChain  .
-     * @param   _destinationDomain  .
-     * @param   _destinationContract  .
-     * @param   _cycles  .
-     * @param   _startTime  .
-     * @param   _interval  .
-     * @param   _relayerFeeInTransactingAsset  .
-     * @param   _swapper  .
-     * @param   _swapData  .
+     * @notice  . Function called by gelato to execute the task
+     * @dev     . can only be called by gelato (dedicatedMsgSender)
+     * @param   _from  . address of the user who is sending the funds
+     * @param   _to  . address of the user who is receiving the funds
+     * @param   _amount  . amount of tokens to be sent
+     * @param   _fromToken  . address of the token to be sent
+     * @param   _toToken  . address of the token to be received
+     * @param   _toChain  . chainId of the destination chain
+     * @param   _destinationDomain  . connext domain of the destination chain
+     * @param   _destinationContract  . address of the contract on the destination chain
+     * @param   _cycles  . number of cycles to be executed
+     * @param   _startTime  . time when the first cycle should be executed (unixtime in seconds)
+     * @param   _interval  . time interval between each cycle (in seconds)
+     * @param   _relayerFeeInTransactingAsset  . relayer fee in transacting asset
+     * @param   _swapper  . address of swapper router
+     * @param   _swapData  . swapdata provider by swap APIs (1inch, 0x)
      */
     function _timeAutomateCron(
         address _from,
@@ -670,20 +670,20 @@ contract AutoPay is AutomateTaskCreator {
     }
 
     /**
-     * @notice  .
+     * @notice  . Function which creates a unique jobId for each task
      * @dev     .
-     * @param   _from  .
-     * @param   _to  .
-     * @param   _amount  .
-     * @param   _fromToken  .
-     * @param   _toToken  .
-     * @param   _toChain  .
-     * @param   _destinationDomain  .
-     * @param   _destinationContract  .
-     * @param   _cycles  .
-     * @param   _startTime  .
-     * @param   _interval  .
-     * @return  bytes32  .
+     * @param   _from  . address of the user who is sending the funds
+     * @param   _to  . address of the user who is receiving the funds
+     * @param   _amount  . amount of tokens to be sent
+     * @param   _fromToken  . address of the token to be sent
+     * @param   _toToken  . address of the token to be received
+     * @param   _toChain  . chainId of the destination chain
+     * @param   _destinationDomain  . connext domain of the destination chain
+     * @param   _destinationContract  . address of the contract on the destination chain
+     * @param   _cycles  . number of cycles to be executed
+     * @param   _startTime  . time when the first cycle should be executed (unixtime in seconds)
+     * @param   _interval  . time interval between each cycle (in seconds)
+     * @return  bytes32  . returns unique jobId
      */
     function _getAutomateJobId(
         address _from,
@@ -716,19 +716,19 @@ contract AutoPay is AutomateTaskCreator {
     }
 
     /**
-     * @notice  .
-     * @dev     .
-     * @param   _treasury  .
+     * @notice  . Function to update the treasury contract  address.
+     * @dev     . can only be called by owner
+     * @param   _treasury  address of the new treasury contract
      */
     function updateTreasury(address _treasury) external onlyOwner {
         treasury = ITreasury(_treasury);
     }
 
     /**
-     * @notice  .
-     * @dev     .
-     * @param   _types  .
-     * @param   _hashes  .
+     * @notice  . Function to update the web3 function hashes.
+     * @dev     . can only be called by owner
+     * @param   _types  . array of options
+     * @param   _hashes  . array of hashes
      */
     function updateWeb3functionHashes(Option[] calldata _types, string[] calldata _hashes) external onlyOwner {
         for (uint256 i = 0; i < _types.length; i++) {
@@ -737,23 +737,32 @@ contract AutoPay is AutomateTaskCreator {
     }
 
     /**
-     * @notice  .
-     * @dev     .
-     * @param   _fee  .
+     * @notice  . Function to update the gelato fees.
+     * @dev     . can only be called by owner
+     * @param   _fee  . new fee
      */
     function updateFee(uint256 _fee) external onlyOwner {
         FEES = _fee;
     }
 
     /**
-     * @notice  .
-     * @dev     .
-     * @param   _gelatoTaskID  .
+     * @notice  . Function to force cancel gelato task
+     * @dev     . can only be called by owner
+     * @param   _gelatoTaskID  . gelato task id
      */
     function _forceCancelGelato(bytes32 _gelatoTaskID) external onlyOwner {
         _cancelTask(_gelatoTaskID);
     }
 
+    /**
+     * @notice  . Function to get the job details
+     * @dev     .
+     * @param   _jobId  . unique jobId created for each task
+     * @return  address  . address of the user who created the job
+     * @return  uint256  . total number of cycles
+     * @return  uint256  . number of cycles executed
+     * @return  bytes32  . gelato task id
+     */
     function _getJob(bytes32 _jobId) external view returns (address, uint256, uint256, bytes32) {
         user memory _user = _createdJobs[_jobId];
         uint256 _totalCycles = _user._totalCycles;
