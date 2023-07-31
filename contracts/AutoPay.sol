@@ -477,7 +477,7 @@ contract AutoPay is AutomateTaskCreator {
         if(_isForwardPaying){
             treasury.depositFunds{value: gasConsumed}(_owner, _fromToken, gasConsumed);
         }else {
-            treasury.useFunds(ETH, gasConsumed, _from);
+            treasury.useFunds(_fromToken, gasConsumed, _from);
         }
 
         emit ExecutedSourceChain(_jobId, _from, userInfo._executedCycles, gasConsumed, amountOut, _isForwardPaying);
