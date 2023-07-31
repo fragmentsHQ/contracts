@@ -671,9 +671,6 @@ contract AutoPay is AutomateTaskCreator {
         require(userInfo._user != address(0), "NO JOB Found");
         userInfo._executedCycles++;
 
-        if (userInfo._executedCycles == userInfo._totalCycles) {
-            _cancelJob(_jobId);
-        }
 
         uint256 gasRemaining2 = gasleft();
 
@@ -682,6 +679,10 @@ contract AutoPay is AutomateTaskCreator {
         treasury.useFunds(ETH, gasConsumed, _from);
 
         emit ExecutedSourceChain(_jobId, _from, userInfo._executedCycles, gasConsumed, amountOut, _isForwardPaying);
+        
+        if (userInfo._executedCycles == userInfo._totalCycles) {
+            _cancelJob(_jobId);
+        }
     }
 
     /**
