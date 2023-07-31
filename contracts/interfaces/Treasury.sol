@@ -23,6 +23,8 @@ interface ITreasury {
 
     function gelato() external view returns (address);
 
+    function owner() external view returns (address);
+
     function getCreditTokensByUser(address user) external view returns (address[] memory);
 
     function getWhitelistedServices() external view returns (address[] memory);
