@@ -9,7 +9,7 @@ async function upgradeAutoPayGoerli() {
   const AutopayV2 = await ethers.getContractFactory("AutoPay");
 
   console.log("Upgrading Autopay...");
-  await upgrades.upgradeProxy(currentProxyAddress, AutopayV2, {
+  const res = await upgrades.upgradeProxy(currentProxyAddress, AutopayV2, {
     kind: "uups",
   });
   console.log("Autopay upgraded");
@@ -22,7 +22,7 @@ async function upgradeAutoPayGoerli() {
   console.log("New Implementation Contract Address:", currentImplAddress);
 
   await hre.run("verify:verify", {
-    address: currentImplAddress,
+    address: currentProxyAddress,
   });
 }
 
@@ -33,9 +33,10 @@ async function upgradeAutoPayMumbai() {
   const AutopayV2 = await ethers.getContractFactory("AutoPay");
 
   console.log("Upgrading Autopay...");
-  await upgrades.upgradeProxy(currentProxyAddress, AutopayV2, {
+  const res = await upgrades.upgradeProxy(currentProxyAddress, AutopayV2, {
     kind: "uups",
   });
+  // const receipt = await res.wait()
   console.log("Autopay upgraded");
 
   const currentImplAddress = await getImplementationAddress(
@@ -46,7 +47,7 @@ async function upgradeAutoPayMumbai() {
   console.log("New Implementation Contract Address:", currentImplAddress);
 
   await hre.run("verify:verify", {
-    address: currentImplAddress,
+    address: currentProxyAddress,
   });
 }
 
@@ -59,7 +60,7 @@ async function main() {
   } else if (chainId == 80001) {
     upgradeAutoPayMumbai();
   } else {
-    upgradeAutoPayGoerli();
+    // upgradeAutoPayGoerli();
     upgradeAutoPayMumbai();
   }
 }

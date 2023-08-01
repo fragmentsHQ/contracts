@@ -3,6 +3,7 @@ require("dotenv").config();
 require("@nomiclabs/hardhat-etherscan");
 require("@openzeppelin/hardhat-upgrades");
 require("solidity-docgen");
+require("@nomicfoundation/hardhat-foundry");
 // require("@nomiclabs/hardhat-ethers");
 // require("@nomiclabs/hardhat-waffle");
 
@@ -16,6 +17,11 @@ module.exports = {
         runs: 200,
       },
       viaIR: true,
+      outputSelection: {
+        '*': {
+          '*': ['storageLayout'],
+        },
+      }
     },
   },
   networks: {

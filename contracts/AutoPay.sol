@@ -5,7 +5,6 @@ pragma abicoder v2;
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-import {IConnext} from "@connext/smart-contracts/contracts/core/connext/interfaces/IConnext.sol";
 import {IXReceiver} from "@connext/smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -18,6 +17,7 @@ import "hardhat/console.sol";
 import "./interfaces/AutomateTaskCreator.sol";
 import "./interfaces/WETH9_.sol";
 import "./interfaces/Treasury.sol";
+import "./interfaces/IConnext.sol";
 import {IOpsProxy} from "./interfaces/IOpsProxy.sol";
 
 contract AutoPay is AutomateTaskCreator {
