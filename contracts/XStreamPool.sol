@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.17;
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -152,12 +152,21 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    function initialize(address payable _ops, address _host, address _cfa, address _connext) public initializer {
+    function initialize(
+        address payable _ops,
+        address _host,
+        address _cfa,
+        address _connext,
+        address _swapRouter,
+        address _WETH
+    ) public initializer {
         AutomateTaskCreator.ATC__initialize(_ops, msg.sender);
 
         host = ISuperfluid(_host);
         cfa = IConstantFlowAgreementV1(_cfa);
         connext = IConnext(_connext);
+        swapRouter = ISwapRouter(_swapRouter);
+        WETH = _WETH;
 
         __Ownable_init();
         __UUPSUpgradeable_init();
@@ -538,7 +547,6 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         uint32 _origin,
         bytes memory _callData
     ) external returns (bytes memory) {
-
         (
             bytes32 _xStreamId,
             uint256 _streamActionType,
