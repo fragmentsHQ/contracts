@@ -46,10 +46,10 @@ contract XStreamPoolTest is XStreamPool, Test {
         uint256 _relayerFeeInTransactingAsset = 10000000;
         uint256 _slippage = 500;
         uint256 _amount = 100;
-        address _bridgingToken =0x7ea6eA49B0b0Ae9c5db7907d139D9Cd3439862a1;
-        address _destinationSuperToken,
-        address _destinationContract,
-        uint32 _destinationDomain
+        address _bridgingToken = 0x7ea6eA49B0b0Ae9c5db7907d139D9Cd3439862a1;
+        address _destinationSuperToken;
+        address _destinationContract;
+        uint32 _destinationDomain;
 
         vm.stopPrank();
     }

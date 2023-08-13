@@ -31,6 +31,79 @@ const deployGoerli = async () => {
   });
 };
 
+/**
+ * @notice  .Initialise function called by the proxy when deployed
+ * @dev     .
+ * @param   _connext  . address of connext router
+ * @param   _swapRouter  .address of uniswap router
+ * @param   _ops  . address of gelato ops automate
+ * @param   _WETH  . address of WETH contract
+ */
+
+
+
+const deployOptimisimGoerli = async () => {
+  const AutoPay = await hre.ethers.getContractFactory("AutoPay");
+  const autoPay = await hre.upgrades.deployProxy(
+    AutoPay,
+    [
+      "0x5Ea1bb242326044699C3d81341c5f535d5Af1504",
+      "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0",
+      "0x74c6FD7D2Bc6a8F0Ebd7D78321A95471b8C2B806"
+    ],
+    {
+      kind: "uups",
+    }
+  );
+
+  await autoPay.deployed();
+
+  console.log(`Deployed to ${autoPay.address}`);
+
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    autoPay.address
+  );
+
+  console.log("Implementation Contract Address:", currentImplAddress);
+
+  await hre.run("verify:verify", {
+    address: currentImplAddress,
+  });
+};
+
+const deployBaseGoerli = async () => {
+  const AutoPay = await hre.ethers.getContractFactory("AutoPay");
+  const autoPay = await hre.upgrades.deployProxy(
+    AutoPay,
+    [
+      "0x5Ea1bb242326044699C3d81341c5f535d5Af1504",
+      "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0",
+      "0x74c6FD7D2Bc6a8F0Ebd7D78321A95471b8C2B806"
+    ],
+    {
+      kind: "uups",
+    }
+  );
+
+  await autoPay.deployed();
+
+  console.log(`Deployed to ${autoPay.address}`);
+
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    autoPay.address
+  );
+
+  console.log("Implementation Contract Address:", currentImplAddress);
+
+  await hre.run("verify:verify", {
+    address: currentImplAddress,
+  });
+};
+
 const deployzkEVM = async () => {
   const AutoPay = await hre.ethers.getContractFactory("AutoPay");
   const autoPay = await hre.upgrades.deployProxy(
@@ -131,6 +204,8 @@ async function main() {
     deployzkEVM();
   } else if (chainId == 137) {
     deployPolygon();
+  } else if (chainId == 420) {
+    deployOptimisimGoerli();
   }
 }
 

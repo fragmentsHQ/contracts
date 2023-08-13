@@ -23,6 +23,28 @@ const deployGoerli = async () => {
   });
 };
 
+const deployOptimisimGoerli = async () => {
+  const Treasury = await hre.ethers.getContractFactory("Treasury");
+  const treasury = await hre.upgrades.deployProxy(Treasury, {
+    kind: "uups",
+  });
+
+  await treasury.deployed();
+
+  console.log(`Deployed to ${treasury.address}`);
+
+  const currentImplAddress = await getImplementationAddress(
+    hre.network.provider,
+    treasury.address
+  );
+
+  console.log("Implementation Contract Address:", currentImplAddress);
+
+  await hre.run("verify:verify", {
+    address: currentImplAddress,
+  });
+};
+
 const deployMumbai = async () => {
   const Treasury = await hre.ethers.getContractFactory("Treasury");
   const treasury = await hre.upgrades.deployProxy(Treasury, {
@@ -77,6 +99,8 @@ async function main() {
     deployMumbai();
   } else if (chainId == 137) {
     deployPolygon();
+  } else if (chainId == 420) {
+    deployOptimisimGoerli();
   }
 }
 

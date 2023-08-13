@@ -13,7 +13,7 @@
   },
   "files": {
     "contracts/AutoPay.sol": {
-      "lastModificationDate": 1690911627264,
+      "lastModificationDate": 1691861636555,
       "contentHash": "1346ee178ee94cb183296fb482e55088",
       "sourceName": "contracts/AutoPay.sol",
       "solcConfig": {
@@ -85,7 +85,7 @@
       }
     },
     "contracts/Treasury.sol": {
-      "lastModificationDate": 1690911627346,
+      "lastModificationDate": 1691861636556,
       "contentHash": "4d57cd7ac96cfa99516f6c98077bd322",
       "sourceName": "contracts/Treasury.sol",
       "solcConfig": {
@@ -148,7 +148,7 @@
       }
     },
     "contracts/XStreamPool.sol": {
-      "lastModificationDate": 1690912355104,
+      "lastModificationDate": 1691861636557,
       "contentHash": "55334a5636bb74a7beddc53c9cfa10a6",
       "sourceName": "contracts/XStreamPool.sol",
       "solcConfig": {
@@ -240,7 +240,7 @@
       }
     },
     "contracts/helpers/Utils.sol": {
-      "lastModificationDate": 1690911627361,
+      "lastModificationDate": 1691861636558,
       "contentHash": "1fb1aed6d186a251a54f6433aedb2ac7",
       "sourceName": "contracts/helpers/Utils.sol",
       "solcConfig": {
@@ -287,7 +287,7 @@
       }
     },
     "contracts/interfaces/AutomateReady.sol": {
-      "lastModificationDate": 1690911541881,
+      "lastModificationDate": 1691861636559,
       "contentHash": "321d79b9a5dbda9ced19f5e26c8d2c24",
       "sourceName": "contracts/interfaces/AutomateReady.sol",
       "solcConfig": {
@@ -345,7 +345,7 @@
       }
     },
     "contracts/interfaces/AutomateTaskCreator.sol": {
-      "lastModificationDate": 1690911541882,
+      "lastModificationDate": 1691861636561,
       "contentHash": "64d5feb44235beb627d2f14c8a738a05",
       "sourceName": "contracts/interfaces/AutomateTaskCreator.sol",
       "solcConfig": {
@@ -404,7 +404,7 @@
       }
     },
     "contracts/interfaces/IConnext.sol": {
-      "lastModificationDate": 1690911541883,
+      "lastModificationDate": 1691861636562,
       "contentHash": "9790277845808b41a148190b608d2e08",
       "sourceName": "contracts/interfaces/IConnext.sol",
       "solcConfig": {
@@ -488,7 +488,7 @@
       }
     },
     "contracts/interfaces/IOpsProxy.sol": {
-      "lastModificationDate": 1690911627370,
+      "lastModificationDate": 1691861636563,
       "contentHash": "8bcbe684725628793885dbfadba73c1c",
       "sourceName": "contracts/interfaces/IOpsProxy.sol",
       "solcConfig": {
@@ -572,7 +572,7 @@
       }
     },
     "contracts/interfaces/Treasury.sol": {
-      "lastModificationDate": 1690911541886,
+      "lastModificationDate": 1691861636565,
       "contentHash": "4f81f623110026e6459cf35fcf0e6fbd",
       "sourceName": "contracts/interfaces/Treasury.sol",
       "solcConfig": {
@@ -614,7 +614,7 @@
       }
     },
     "contracts/interfaces/Types.sol": {
-      "lastModificationDate": 1690911541887,
+      "lastModificationDate": 1691861636566,
       "contentHash": "5593429ec18b5d384c1288f5eaab86d9",
       "sourceName": "contracts/interfaces/Types.sol",
       "solcConfig": {
@@ -665,7 +665,7 @@
       }
     },
     "contracts/interfaces/WETH9_.sol": {
-      "lastModificationDate": 1690911627361,
+      "lastModificationDate": 1691861636567,
       "contentHash": "7a4341c4c03e5e9f219dee860e11a192",
       "sourceName": "contracts/interfaces/WETH9_.sol",
       "solcConfig": {
@@ -1600,7 +1600,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "5a20b2cad87ddb61c7a3a6af21289e28",
       "sourceName": "node_modules/@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
@@ -1644,7 +1644,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "d0d060231a45da7a1eecbb5cd286fa40",
       "sourceName": "node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol",
       "solcConfig": {
@@ -1686,7 +1686,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/interfaces/draft-IERC1822.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "2858d98e74e67987ec81b39605230b74",
       "sourceName": "node_modules/@openzeppelin/contracts/interfaces/draft-IERC1822.sol",
       "solcConfig": {
@@ -1728,7 +1728,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "3fc3c7c0a2956f36e766691bb9473b06",
       "sourceName": "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol",
       "solcConfig": {
@@ -1778,7 +1778,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Upgrade.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "a127706394bead18392601a20d44867a",
       "sourceName": "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Upgrade.sol",
       "solcConfig": {
@@ -1826,7 +1826,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "40b3d81a836d50ff47e03893dcaaf204",
       "sourceName": "node_modules/@openzeppelin/contracts/proxy/Proxy.sol",
       "solcConfig": {
@@ -1868,7 +1868,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/proxy/beacon/IBeacon.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "b6bd23bf19e90b771337037706470933",
       "sourceName": "node_modules/@openzeppelin/contracts/proxy/beacon/IBeacon.sol",
       "solcConfig": {
@@ -1910,7 +1910,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "df36f7051335cd1e748b1b6463b7fdd3",
       "sourceName": "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
       "solcConfig": {
@@ -1952,7 +1952,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "aa849939a4ae83a4dcb2dca9b3e9e707",
       "sourceName": "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol",
       "solcConfig": {
@@ -1994,8 +1994,8 @@
       }
     },
     "node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
-      "lastModificationDate": 1690897446905,
-      "contentHash": "1b5d667d3740d866eca0352758e59827",
+      "lastModificationDate": 1690523111150,
+      "contentHash": "a159c68235d1d18f16dd0a57a000daea",
       "sourceName": "node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
       "solcConfig": {
         "settings": {
@@ -2040,7 +2040,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "48de4c9a3a4ae5ef66a2aa620843413f",
       "sourceName": "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol",
       "solcConfig": {
@@ -2084,7 +2084,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "efbc0d15b80a74e34dbe8da0f3e879bb",
       "sourceName": "node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
       "solcConfig": {
@@ -2129,7 +2129,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/token/ERC777/IERC777.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "ac43d0ff9ace16c82712150d22c71207",
       "sourceName": "node_modules/@openzeppelin/contracts/token/ERC777/IERC777.sol",
       "solcConfig": {
@@ -2171,7 +2171,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "211ffd288c1588ba8c10eae668ca3c66",
       "sourceName": "node_modules/@openzeppelin/contracts/utils/Address.sol",
       "solcConfig": {
@@ -2213,7 +2213,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
       "sourceName": "node_modules/@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
@@ -2255,7 +2255,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/utils/StorageSlot.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "682f7dd1f2e1147c8390e7575deceb2d",
       "sourceName": "node_modules/@openzeppelin/contracts/utils/StorageSlot.sol",
       "solcConfig": {
@@ -2297,7 +2297,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/utils/Strings.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "48686fc32a22a3754b8e63321857dd2a",
       "sourceName": "node_modules/@openzeppelin/contracts/utils/Strings.sol",
       "solcConfig": {
@@ -2342,7 +2342,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "03e6768535ac4da0e9756f1d8a4a018a",
       "sourceName": "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol",
       "solcConfig": {
@@ -2384,7 +2384,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/utils/math/Math.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "fe63409d8a06818b926cf89e0ea88b1b",
       "sourceName": "node_modules/@openzeppelin/contracts/utils/math/Math.sol",
       "solcConfig": {
@@ -2426,7 +2426,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "9488ebd4daacfee8ad04811600d7d061",
       "sourceName": "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol",
       "solcConfig": {
@@ -2468,7 +2468,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
-      "lastModificationDate": 1690897446905,
+      "lastModificationDate": 1690523111150,
       "contentHash": "e029f029abc1fd2d85d54fd69086f076",
       "sourceName": "node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol",
       "solcConfig": {
@@ -2510,7 +2510,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "db24b956904575cc79d02867ec03263c",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
       "solcConfig": {
@@ -2556,7 +2556,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/interfaces/IERC1967Upgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "a5421a5e611067b9202e83329fbf6fc7",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/interfaces/IERC1967Upgradeable.sol",
       "solcConfig": {
@@ -2598,7 +2598,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/interfaces/draft-IERC1822Upgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "a6883cfd85607b16c121a02728369eb3",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/interfaces/draft-IERC1822Upgradeable.sol",
       "solcConfig": {
@@ -2640,7 +2640,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "2587366284baa690cce0accaca1a20f9",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol",
       "solcConfig": {
@@ -2689,7 +2689,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/proxy/beacon/IBeaconUpgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "21bffd733b4ca013e125a0ffe2e52254",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/proxy/beacon/IBeaconUpgradeable.sol",
       "solcConfig": {
@@ -2731,7 +2731,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "b0970a564d121abf9adfff8d1a01eb16",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
       "solcConfig": {
@@ -2775,7 +2775,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "52ef5d6c909d6f8ef3077445d3328eca",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
       "solcConfig": {
@@ -2825,7 +2825,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "efeffcf5034292d7ea635de588c95995",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol",
       "solcConfig": {
@@ -2870,7 +2870,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "c30c805386fda8a42ff515da963d3a95",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
       "solcConfig": {
@@ -2912,7 +2912,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "6200b84950eb05b4a92a39fd1d6e0f9b",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
       "solcConfig": {
@@ -2957,7 +2957,7 @@
       }
     },
     "node_modules/@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol": {
-      "lastModificationDate": 1690897446614,
+      "lastModificationDate": 1690523099198,
       "contentHash": "02cf959b00ba5c650708472f195f8b29",
       "sourceName": "node_modules/@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol",
       "solcConfig": {
@@ -4056,7 +4056,7 @@
       }
     },
     "test/AutoPay.t.sol": {
-      "lastModificationDate": 1690911627361,
+      "lastModificationDate": 1691861636575,
       "contentHash": "8133d4defa4d5d03b0829f405b191c34",
       "sourceName": "test/AutoPay.t.sol",
       "solcConfig": {
@@ -4154,8 +4154,8 @@
       }
     },
     "test/XStreamPool.t.sol": {
-      "lastModificationDate": 1690912570687,
-      "contentHash": "28bf96917d094399e041cf70b6c6ff80",
+      "lastModificationDate": 1691861750095,
+      "contentHash": "03725896e5ce0640f751fda3c0381ac6",
       "sourceName": "test/XStreamPool.t.sol",
       "solcConfig": {
         "settings": {
@@ -4268,6 +4268,86 @@
       "artifacts": {
         "XStreamPoolTest": {
           "0.8.17+commit.8df45f5f.Windows.msvc": "XStreamPool.t.sol\\XStreamPoolTest.json"
+        }
+      }
+    },
+    "test/deployAutopay.sol": {
+      "lastModificationDate": 1691933405924,
+      "contentHash": "48e017a5db40f8713e1a25dc83268a53",
+      "sourceName": "test/deployAutopay.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "useLiteralContent": false,
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "paris",
+          "viaIR": true,
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "contracts\\AutoPay.sol",
+        "contracts\\interfaces\\AutomateReady.sol",
+        "contracts\\interfaces\\AutomateTaskCreator.sol",
+        "contracts\\interfaces\\IConnext.sol",
+        "contracts\\interfaces\\IOpsProxy.sol",
+        "contracts\\interfaces\\Treasury.sol",
+        "contracts\\interfaces\\Types.sol",
+        "contracts\\interfaces\\WETH9_.sol",
+        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/AggregatorV3Interface.sol",
+        "node_modules/@connext\\smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol",
+        "node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol",
+        "node_modules/@openzeppelin/contracts/interfaces/draft-IERC1822.sol",
+        "node_modules/@openzeppelin\\contracts/proxy/ERC1967/ERC1967Proxy.sol",
+        "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Upgrade.sol",
+        "node_modules/@openzeppelin/contracts/proxy/Proxy.sol",
+        "node_modules/@openzeppelin/contracts/proxy/beacon/IBeacon.sol",
+        "node_modules/@openzeppelin\\contracts/token/ERC20/IERC20.sol",
+        "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol",
+        "node_modules/@openzeppelin\\contracts/token/ERC20/utils/SafeERC20.sol",
+        "node_modules/@openzeppelin/contracts/utils/Address.sol",
+        "node_modules/@openzeppelin/contracts/utils/StorageSlot.sol",
+        "node_modules/@openzeppelin\\contracts/utils/Strings.sol",
+        "node_modules/@openzeppelin\\contracts/utils/math/Math.sol",
+        "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/interfaces/IERC1967Upgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/interfaces/draft-IERC1822Upgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/proxy/beacon/IBeaconUpgradeable.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/proxy/utils/Initializable.sol",
+        "node_modules/@openzeppelin\\contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
+        "node_modules/@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol",
+        "node_modules/@uniswap\\v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/interfaces/ISwapRouter.sol",
+        "node_modules/@uniswap\\v3-periphery/contracts/libraries/TransferHelper.sol"
+      ],
+      "versionRequirement": "=0.8.17",
+      "artifacts": {
+        "AutoPayTest": {
+          "0.8.17+commit.8df45f5f.Windows.msvc": "deployAutopay.sol\\AutoPayTest.json"
         }
       }
     }

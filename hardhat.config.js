@@ -9,7 +9,7 @@ require("@nomicfoundation/hardhat-foundry");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.19",
+    version: "0.8.17",
     settings: {
       optimizer: {
         enabled: true,
@@ -54,12 +54,20 @@ module.exports = {
       accounts: [process.env.FRAGMENTS_KEY],
       saveDeployments: true,
     },
+    optimisticGoerli: {
+      chainId: 420,
+      url: process.env.ALCHEMY_OPTIMISM_GOERLI_API_URL,
+      accounts: [process.env.FRAGMENTS_KEY],
+      saveDeployments: true,
+      gasPrice: 100000000000,
+    },
   },
   etherscan: {
     apiKey: {
       goerli: process.env.ETHERSCAN_API_KEY,
       polygonMumbai: process.env.POLYGONSCAN_API_KEY,
       polygon: process.env.POLYGONSCAN_API_KEY,
+      optimisticGoerli: process.env.OPTISIM_API_KEY,
     },
   },
   docgen: {},
