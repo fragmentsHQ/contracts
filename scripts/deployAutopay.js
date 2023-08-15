@@ -43,7 +43,9 @@ const deployGoerli = async () => {
 
 
 const deployOptimisimGoerli = async () => {
+  console.log("Deployging to Optimistic Goerli")
   const AutoPay = await hre.ethers.getContractFactory("AutoPay");
+  console.log("1")
   const autoPay = await hre.upgrades.deployProxy(
     AutoPay,
     [
@@ -55,8 +57,9 @@ const deployOptimisimGoerli = async () => {
     {
       kind: "uups",
     }
-  );
-
+    );
+    console.log("2")
+    
   await autoPay.deployed();
 
   console.log(`Deployed to ${autoPay.address}`);
@@ -205,6 +208,8 @@ async function main() {
   } else if (chainId == 137) {
     deployPolygon();
   } else if (chainId == 420) {
+    deployOptimisimGoerli();
+  } else {
     deployOptimisimGoerli();
   }
 }

@@ -21,7 +21,8 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: process.env.ALCHEMY_GOERLI_API_URL,
+        url: process.env.ALCHEMY_OPTIMISM_GOERLI_API_URL,
+        gasPrice: 1000000000,
       },
     },
     goerli: {
@@ -59,7 +60,7 @@ module.exports = {
       url: process.env.ALCHEMY_OPTIMISM_GOERLI_API_URL,
       accounts: [process.env.FRAGMENTS_KEY],
       saveDeployments: true,
-      gasPrice: 100000000000,
+      // gasPrice: 1000000000,
     },
   },
   etherscan: {

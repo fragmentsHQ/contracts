@@ -13,8 +13,8 @@
   },
   "files": {
     "contracts/AutoPay.sol": {
-      "lastModificationDate": 1691861636555,
-      "contentHash": "1346ee178ee94cb183296fb482e55088",
+      "lastModificationDate": 1692095441108,
+      "contentHash": "55c3b4e31350d3bae816dc7c1c22719c",
       "sourceName": "contracts/AutoPay.sol",
       "solcConfig": {
         "settings": {
@@ -4056,8 +4056,8 @@
       }
     },
     "test/AutoPay.t.sol": {
-      "lastModificationDate": 1691861636575,
-      "contentHash": "8133d4defa4d5d03b0829f405b191c34",
+      "lastModificationDate": 1691935088454,
+      "contentHash": "faf75abce5055ae7072f3041c37b7703",
       "sourceName": "test/AutoPay.t.sol",
       "solcConfig": {
         "settings": {
@@ -4271,10 +4271,10 @@
         }
       }
     },
-    "test/deployAutopay.sol": {
-      "lastModificationDate": 1691933405924,
-      "contentHash": "48e017a5db40f8713e1a25dc83268a53",
-      "sourceName": "test/deployAutopay.sol",
+    "test/deployAutoPay.t.sol": {
+      "lastModificationDate": 1691936443764,
+      "contentHash": "6dea764dbd00fd059b65fe409bddfb4f",
+      "sourceName": "test/deployAutoPay.t.sol",
       "solcConfig": {
         "settings": {
           "optimizer": {
@@ -4314,6 +4314,24 @@
         "contracts\\interfaces\\Treasury.sol",
         "contracts\\interfaces\\Types.sol",
         "contracts\\interfaces\\WETH9_.sol",
+        "lib/forge-std/lib/ds-test/src\\test.sol",
+        "lib/forge-std/src/Base.sol",
+        "lib/forge-std/src/StdAssertions.sol",
+        "lib/forge-std/src/StdChains.sol",
+        "lib/forge-std/src/StdCheats.sol",
+        "lib/forge-std/src/StdError.sol",
+        "lib/forge-std/src/StdInvariant.sol",
+        "lib/forge-std/src/StdJson.sol",
+        "lib/forge-std/src/StdMath.sol",
+        "lib/forge-std/src/StdStorage.sol",
+        "lib/forge-std/src/StdStyle.sol",
+        "lib/forge-std/src/StdUtils.sol",
+        "lib/forge-std/src\\Test.sol",
+        "lib/forge-std/src/Vm.sol",
+        "lib/forge-std/src/console.sol",
+        "lib/forge-std/src/console2.sol",
+        "lib/forge-std/src/interfaces/IMulticall3.sol",
+        "lib/forge-std/src/safeconsole.sol",
         "node_modules/@chainlink\\contracts/src/v0.8/interfaces/AggregatorV3Interface.sol",
         "node_modules/@connext\\smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol",
         "node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol",
@@ -4347,7 +4365,7 @@
       "versionRequirement": "=0.8.17",
       "artifacts": {
         "AutoPayTest": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "deployAutopay.sol\\AutoPayTest.json"
+          "0.8.17+commit.8df45f5f.Windows.msvc": "deployAutoPay.t.sol\\AutoPayTest.json"
         }
       }
     }

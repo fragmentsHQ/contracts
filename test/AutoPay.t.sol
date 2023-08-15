@@ -17,11 +17,11 @@ contract AutoPayTest is AutoPay, Test {
         address payable proxyAddress = payable(address(proxy));
         autopay = AutoPay(proxyAddress);
 
-        IConnext _connext = IConnext(0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649);
+        IConnext _connext = IConnext(0x5Ea1bb242326044699C3d81341c5f535d5Af1504);
         ISwapRouter _swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
         address payable _ops = payable(0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0);
 
-        autopay.initialize(_connext, _swapRouter, _ops, 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6);
+        autopay.initialize(_connext, _swapRouter, _ops, 0x74c6FD7D2Bc6a8F0Ebd7D78321A95471b8C2B806);
     }
 
     function testCreateTimeAutomate() public {

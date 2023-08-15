@@ -53,18 +53,18 @@ contract AutoPay is AutomateTaskCreator {
     /**
      * @notice  . mapping to store all ongoing jobs
      * @dev     . key is the unique jobId
-     */    
+     */
     mapping(bytes32 => user) public _createdJobs;
     /**
      * @notice  . mapping to store all web3 function hashes
      * @dev     . key is the option enum
-     */ 
+     */
     mapping(Option => string) public _web3functionHashes;
 
     /**
      * @notice  .Event triggered when a job is created on the source chain
      * @dev     .
-     */ 
+     */
     event JobCreated(
         address indexed _taskCreator,
         bytes32 indexed _jobId,
@@ -99,7 +99,7 @@ contract AutoPay is AutomateTaskCreator {
         uint32 destinationDomain
     );
 
-     /**
+    /**
      * @notice  .Event triggered when a xcall is received on destination chain
      * @dev     .
      */
@@ -114,7 +114,7 @@ contract AutoPay is AutomateTaskCreator {
         address receiverAccount
     );
 
-     /**
+    /**
      * @notice  .Event triggered when a job is executed on source chain
      * @dev     .
      */
@@ -601,8 +601,6 @@ contract AutoPay is AutomateTaskCreator {
      * @param   _startTime  . time when the first cycle should be executed (unixtime in seconds)
      * @param   _interval  . time interval between each cycle (in seconds)
      * @param   _relayerFeeInTransactingAsset  . relayer fee in transacting asset
-     * @param   _swapper  . address of swapper router
-     * @param   _swapData  . swapdata provider by swap APIs (1inch, 0x)
      */
     function _timeAutomateCron(
         address _from,
@@ -617,9 +615,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _startTime,
         uint256 _interval,
         uint256 _relayerFeeInTransactingAsset,
-        bool _isForwardPaying,
-        address _swapper,
-        bytes calldata _swapData
+        bool _isForwardPaying
     ) public onlyDedicatedMsgSender {
         uint256 gasRemaining = gasleft();
 
@@ -634,8 +630,8 @@ contract AutoPay is AutomateTaskCreator {
         uint256 amountOut = _amount;
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
-            amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
-            // amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
+            // amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
+            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
             TransferHelper.safeTransfer(_toToken, _to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
@@ -671,16 +667,15 @@ contract AutoPay is AutomateTaskCreator {
         require(userInfo._user != address(0), "NO JOB Found");
         userInfo._executedCycles++;
 
-
         uint256 gasRemaining2 = gasleft();
 
         uint256 gasConsumed = (gasRemaining - gasRemaining2) * tx.gasprice;
         gasConsumed = gasConsumed + (gasConsumed * FEES / 100);
 
         address _owner = treasury.owner();
-        if(_isForwardPaying){
+        if (_isForwardPaying) {
             treasury.depositFunds{value: gasConsumed}(_owner, _fromToken, gasConsumed);
-        }else {
+        } else {
             treasury.useFunds(ETH, gasConsumed, _from);
         }
 
