@@ -423,9 +423,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 _startTime,
         uint256 _interval,
         uint256 _relayerFeeInTransactingAsset,
-        bool _isForwardPaying,
-        address _swapper,
-        bytes calldata _swapData
+        bool _isForwardPaying
     ) public onlyDedicatedMsgSender {
         uint256 gasRemaining = gasleft();
 
@@ -440,8 +438,8 @@ contract AutoPay is AutomateTaskCreator {
         uint256 amountOut = _amount;
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
-            amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
-            // amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
+            // amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
+            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
             TransferHelper.safeTransfer(_toToken, _to, amountOut);
             // IERC20(_toToken).transfer(_to, amountOut);
         } else if (block.chainid != _toChain) {
