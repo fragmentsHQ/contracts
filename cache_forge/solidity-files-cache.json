@@ -13,8 +13,8 @@
   },
   "files": {
     "contracts/AutoPay.sol": {
-      "lastModificationDate": 1692095441108,
-      "contentHash": "55c3b4e31350d3bae816dc7c1c22719c",
+      "lastModificationDate": 1692211735684,
+      "contentHash": "87ea31c21563a62b585f8994297f4ca8",
       "sourceName": "contracts/AutoPay.sol",
       "solcConfig": {
         "settings": {
@@ -54,7 +54,6 @@
         "contracts\\interfaces\\Treasury.sol",
         "contracts\\interfaces\\Types.sol",
         "contracts\\interfaces\\WETH9_.sol",
-        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/AggregatorV3Interface.sol",
         "node_modules/@connext\\smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol",
         "node_modules/@openzeppelin\\contracts/token/ERC20/IERC20.sol",
         "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol",
@@ -148,8 +147,8 @@
       }
     },
     "contracts/XStreamPool.sol": {
-      "lastModificationDate": 1691861636557,
-      "contentHash": "55334a5636bb74a7beddc53c9cfa10a6",
+      "lastModificationDate": 1692121152964,
+      "contentHash": "c1cc355eea3bffc8dbf76fb0a3aafba5",
       "sourceName": "contracts/XStreamPool.sol",
       "solcConfig": {
         "settings": {
@@ -186,6 +185,7 @@
         "contracts\\interfaces\\AutomateTaskCreator.sol",
         "contracts\\interfaces\\IConnext.sol",
         "contracts\\interfaces\\IDestinationPool.sol",
+        "contracts\\interfaces\\IOpsProxy.sol",
         "contracts\\interfaces\\Treasury.sol",
         "contracts\\interfaces\\Types.sol",
         "contracts\\interfaces\\WETH9_.sol",
@@ -1512,48 +1512,6 @@
       "artifacts": {
         "safeconsole": {
           "0.8.17+commit.8df45f5f.Windows.msvc": "safeconsole.sol\\safeconsole.json"
-        }
-      }
-    },
-    "node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol": {
-      "lastModificationDate": 1690523099146,
-      "contentHash": "d9654a0fc044a31d4106ee6bca772add",
-      "sourceName": "node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "useLiteralContent": false,
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "paris",
-          "viaIR": true,
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": "^0.8.0",
-      "artifacts": {
-        "AggregatorV3Interface": {
-          "0.8.17+commit.8df45f5f.Windows.msvc": "AggregatorV3Interface.sol\\AggregatorV3Interface.json"
         }
       }
     },
@@ -4056,7 +4014,7 @@
       }
     },
     "test/AutoPay.t.sol": {
-      "lastModificationDate": 1691935088454,
+      "lastModificationDate": 1692098559764,
       "contentHash": "faf75abce5055ae7072f3041c37b7703",
       "sourceName": "test/AutoPay.t.sol",
       "solcConfig": {
@@ -4116,7 +4074,6 @@
         "lib/forge-std/src/console2.sol",
         "lib/forge-std/src/interfaces/IMulticall3.sol",
         "lib/forge-std/src/safeconsole.sol",
-        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/AggregatorV3Interface.sol",
         "node_modules/@connext\\smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol",
         "node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol",
         "node_modules/@openzeppelin/contracts/interfaces/draft-IERC1822.sol",
@@ -4154,8 +4111,8 @@
       }
     },
     "test/XStreamPool.t.sol": {
-      "lastModificationDate": 1691861750095,
-      "contentHash": "03725896e5ce0640f751fda3c0381ac6",
+      "lastModificationDate": 1692103216846,
+      "contentHash": "5e12e6fe8753c724da4dfa8f8983d90b",
       "sourceName": "test/XStreamPool.t.sol",
       "solcConfig": {
         "settings": {
@@ -4193,6 +4150,7 @@
         "contracts\\interfaces\\AutomateTaskCreator.sol",
         "contracts\\interfaces\\IConnext.sol",
         "contracts\\interfaces\\IDestinationPool.sol",
+        "contracts\\interfaces\\IOpsProxy.sol",
         "contracts\\interfaces\\Treasury.sol",
         "contracts\\interfaces\\Types.sol",
         "contracts\\interfaces\\WETH9_.sol",
@@ -4272,7 +4230,7 @@
       }
     },
     "test/deployAutoPay.t.sol": {
-      "lastModificationDate": 1691936443764,
+      "lastModificationDate": 1692098559766,
       "contentHash": "6dea764dbd00fd059b65fe409bddfb4f",
       "sourceName": "test/deployAutoPay.t.sol",
       "solcConfig": {
@@ -4332,7 +4290,6 @@
         "lib/forge-std/src/console2.sol",
         "lib/forge-std/src/interfaces/IMulticall3.sol",
         "lib/forge-std/src/safeconsole.sol",
-        "node_modules/@chainlink\\contracts/src/v0.8/interfaces/AggregatorV3Interface.sol",
         "node_modules/@connext\\smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol",
         "node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol",
         "node_modules/@openzeppelin/contracts/interfaces/draft-IERC1822.sol",

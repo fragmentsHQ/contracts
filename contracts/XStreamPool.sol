@@ -19,6 +19,7 @@ import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/app
 import "./interfaces/AutomateTaskCreator.sol";
 import "./interfaces/WETH9_.sol";
 import "./interfaces/Treasury.sol";
+import "./interfaces/IOpsProxy.sol";
 import "./interfaces/IConnext.sol";
 import {IDestinationPool} from "./interfaces/IDestinationPool.sol";
 
@@ -201,6 +202,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         if (amountOut < _relayerFeeInTransactingAsset) {
             revert AmountLessThanRelayer(_amount, _relayerFeeInTransactingAsset);
         }
+        
 
         bytes memory callData = abi.encode(
             _xStreamId,
@@ -209,6 +211,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
             _receiver,
             _flowRate,
             block.timestamp,
+            _amount,
             _relayerFeeInTransactingAsset,
             _destinationSuperToken
         );
@@ -320,37 +323,11 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         );
     }
 
-    function _gelatoTimeJobCreator(
-        address _from,
-        address _to,
-        uint256 _amount,
-        address _fromToken,
-        address _toToken,
-        uint256 _toChain,
-        uint32 _destinationDomain,
-        address _destinationContract,
-        uint256 _cycles,
-        uint256 _startTime,
-        uint256 _interval,
-        bytes memory _web3FunctionArgsHex
-    ) internal returns (bytes32) {
-        bytes memory execData = abi.encodeWithSelector(
-            this._createXStream.selector,
-            _from,
-            _to,
-            _amount,
-            _fromToken,
-            _toToken,
-            _toChain,
-            _destinationDomain,
-            _destinationContract,
-            _cycles,
-            _startTime,
-            _interval,
-            0,
-            address(0),
-            bytes("")
-        );
+    function _gelatoTimeJobCreator(uint256 _startTime, uint256 _interval, bytes memory _web3FunctionArgsHex)
+        internal
+        returns (bytes32)
+    {
+        bytes memory execData = abi.encodeWithSelector(IOpsProxy.batchExecuteCall.selector);
 
         string memory _web3FunctionHash = _web3functionHashes[StreamOptions.START];
 
@@ -368,7 +345,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
         return id;
     }
 
-    function createTask(address _user, uint256 _interval, uint256 _startTime) internal returns (bytes32) {
+    function _gelatoTimeJobCreator(address _user, uint256 _interval, uint256 _startTime) internal returns (bytes32) {
         bytes memory execData = abi.encodeWithSelector(this.deleteStream.selector, _user);
 
         ModuleData memory moduleData = ModuleData({modules: new Module[](3), args: new bytes[](3)});
@@ -522,7 +499,7 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
 
                 /// @dev Gelato OPS is called here
                 uint256 _interval = _amount / uint256(uint96(_flowRate));
-                createTask(_account, _interval, _startTime);
+                _gelatoTimeJobCreator(_account, _interval, _startTime);
             } else {
                 callData = abi.encodeCall(cfa.updateFlow, (superToken, _account, _flowRate, new bytes(0)));
             }
@@ -557,6 +534,20 @@ contract XStreamPool is SuperAppBase, IXReceiver, AutomateTaskCreator {
             uint256 _relayerFee,
             address _superToken
         ) = abi.decode(_callData, (bytes32, uint256, address, address, int96, uint256, uint256, address));
+
+        bytes32 _xStreamIdLocal = _getXStreamJobId(
+            _streamActionType,
+            msg.sender,
+            _receiver,
+            _flowRate,
+            block.timestamp,
+            _superToken,
+            _asset,
+            _amount
+        );
+
+        
+
 
         emit XReceiveData(
             _xStreamId,

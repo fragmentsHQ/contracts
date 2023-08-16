@@ -40,16 +40,16 @@ contract XStreamPoolTest is XStreamPool, Test {
     function test_createXStream() public {
         vm.startPrank(address(0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7));
 
-        uint256 _streamActionType = 1;
-        address _receiver = 0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7;
-        int96 _flowRate = 100;
-        uint256 _relayerFeeInTransactingAsset = 10000000;
-        uint256 _slippage = 500;
-        uint256 _amount = 100;
-        address _bridgingToken = 0x7ea6eA49B0b0Ae9c5db7907d139D9Cd3439862a1;
-        address _destinationSuperToken;
-        address _destinationContract;
-        uint32 _destinationDomain;
+        // uint256 _streamActionType = 1;
+        // address _receiver = 0x6d4b5acFB1C08127e8553CC41A9aC8F06610eFc7;
+        // int96 _flowRate = 100;
+        // uint256 _relayerFeeInTransactingAsset = 10000000;
+        // uint256 _slippage = 500;
+        // uint256 _amount = 100;
+        // address _bridgingToken = 0x7ea6eA49B0b0Ae9c5db7907d139D9Cd3439862a1;
+        // address _destinationSuperToken;
+        // address _destinationContract;
+        // uint32 _destinationDomain;
 
         vm.stopPrank();
     }

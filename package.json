@@ -18,7 +18,8 @@
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "format": "prettier --write .",
     "toolbox": "docker run -it --rm -v $PWD:/src trailofbits/eth-security-toolbox",
-    "test": "forge test -vvvvv --fork-url https://opt-goerli.g.alchemy.com/v2/Yxf2EoZdvx6vKcXA7Li9pgVI-noXKL2f --watch --match-path test/deployAutoPay.t.sol"
+    "autopayDeplTest": "forge test -vvvvv --fork-url https://opt-goerli.g.alchemy.com/v2/Yxf2EoZdvx6vKcXA7Li9pgVI-noXKL2f --watch --match-path test/deployAutoPay.t.sol",
+    "xstreamTest": "forge test -vvvvv --fork-url https://eth-goerli.g.alchemy.com/v2/2zMyRRzfklqm_uJSr-IA5pG3exb3UDvF --watch --match-path test/XStreamPool.t.sol"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
@@ -43,6 +44,7 @@
     "@openzeppelin/contracts": "^4.8.3",
     "@openzeppelin/contracts-upgradeable": "^4.8.3",
     "@superfluid-finance/ethereum-contracts": "^1.6.0",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
     "@uniswap/v3-periphery": "^1.4.3",
     "dotenv": "^16.0.3",
     "ethers": "5",

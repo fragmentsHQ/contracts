@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
 
 import {IXReceiver} from "@connext/smart-contracts/contracts/core/connext/interfaces/IXReceiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -212,7 +212,7 @@ contract AutoPay is AutomateTaskCreator {
         uint256 amountOut;
 
         if (fromToken != WETH) {
-            amountOut = swapExactInputSingle(fromToken, WETH, amount);
+            amountOut = swapExactInputSingleV3(fromToken, WETH, amount);
         }
 
         if (fromToken != address(0)) {
@@ -278,7 +278,7 @@ contract AutoPay is AutomateTaskCreator {
 
         uint256 amountOut = _amount;
         if (_asset != _toToken) {
-            amountOut = swapExactInputSingle(_asset, _toToken, amountOut);
+            amountOut = swapExactInputSingleV3(_asset, _toToken, amountOut);
         }
 
         TransferHelper.safeTransfer(_asset, _recipient, amountOut);
@@ -302,7 +302,7 @@ contract AutoPay is AutomateTaskCreator {
      * @return  amountOut  . amount of tokens recieved after swap
      */
     function _setupAndSwap(
-        address _fromAsset,
+        address _fromAsset, 
         address _toAsset,
         uint256 _amountIn,
         address _swapper,
@@ -332,7 +332,7 @@ contract AutoPay is AutomateTaskCreator {
      * @param   amountIn  . amount of tokens to be swapped
      * @return  amountOut  . amount of tokens recieved after swap
      */
-    function swapExactInputSingle(address _fromToken, address _toToken, uint256 amountIn)
+    function swapExactInputSingleV3(address _fromToken, address _toToken, uint256 amountIn)
         internal
         returns (uint256 amountOut)
     {
@@ -631,7 +631,7 @@ contract AutoPay is AutomateTaskCreator {
 
         if (block.chainid == _toChain && _fromToken != _toToken) {
             // amountOut = _setupAndSwap(_fromToken, _toToken, _amount, _swapper, _swapData);
-            amountOut = swapExactInputSingle(_fromToken, _toToken, _amount);
+            amountOut = swapExactInputSingleV3(_fromToken, _toToken, _amount);
             TransferHelper.safeTransfer(_toToken, _to, amountOut);
         } else if (block.chainid != _toChain) {
             xTransfer(
